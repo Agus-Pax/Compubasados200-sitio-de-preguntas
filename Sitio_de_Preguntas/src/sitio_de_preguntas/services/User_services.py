@@ -18,9 +18,9 @@ def delete_user(id: int):
     db.session.commit()
 
 def modify_user(id: int, name: str, email: str):
-    if User.query.filter_by(email = email).first():
-            raise EmailYaEnUso
     user = db.get_or_404(User, id)
+    if user.email != email and User.query.filter_by(email = email).first():
+        raise EmailYaEnUso
     user.email = email
     user.name = name
     db.session.commit()
