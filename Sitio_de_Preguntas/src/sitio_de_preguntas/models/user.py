@@ -6,5 +6,5 @@ class User(db.Model):
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<User {self.email}>"
