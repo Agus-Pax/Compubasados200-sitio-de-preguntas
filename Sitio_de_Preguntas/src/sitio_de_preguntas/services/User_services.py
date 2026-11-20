@@ -1,13 +1,14 @@
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import User
 
+
 class EmailYaEnUso(Exception):
     pass
 
 def create_user(name: str, email: str):
     if User.query.filter_by(email = email).first():
         raise EmailYaEnUso
-    user = User(name, email)
+    user = User(name=name, email=email)
     db.session.add(user)
     db.session.commit()
     return user
