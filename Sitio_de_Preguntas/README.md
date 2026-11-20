@@ -23,8 +23,16 @@ uv sync
 uv run sitio-de-preguntas
 ```
 
-La creación del esquema y las migraciones de la base de datos quedan a cargo del
-módulo de base de datos (otro responsable).
+El esquema de la base de datos se crea con Alembic a partir de los modelos de
+SQLAlchemy:
+
+```bash
+uv run alembic -c migrations/alembic.ini upgrade head
+```
+
+Alembic usa la misma URL que la aplicación: `DATABASE_URL` si está definida, o
+`sqlite:///app.db` dentro de `instance/` por defecto. Para revertir el esquema:
+`uv run alembic -c migrations/alembic.ini downgrade base`.
 
 Variables de entorno:
 
@@ -45,3 +53,17 @@ curl -X POST http://127.0.0.1:5000/api/preguntas \
   -H 'Content-Type: application/json' \
   -d '{"usuario_id": 1, "titulo": "¿Cómo ordenar?", "contenido": "Detalle", "categoria_id": 1, "etiquetas_ids": [1]}'
 ```
+
+## Deuda técnica detectada (Issue #3)
+
+La comparación con el modelo conceptual UML (`diagramaCompleto.png` /
+`Proyecto taller.asta`) mostró diferencias que no se corrigen en este Issue
+porque requieren modificar los modelos actuales y corresponden a otros Issues:
+
+- Falta representar el rol de administrador (`Admin`).
+- Falta el atributo de respuesta aceptada (`accepted`) y la asociación
+  `RTA Elegida` (multiplicidad `0..1`).
+- Falta el atributo `descripcion` en `Etiqueta`.
+
+La migración inicial refleja únicamente los modelos vigentes; estas diferencias
+quedan documentadas para resolverse en Issues separados.
