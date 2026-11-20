@@ -1,26 +1,33 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
+from sitio_de_preguntas import create_app, models  # noqa: F401
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas import models
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+
+def _configurar_url() -> None:
+    """Usar la URL de la app para apuntar siempre a la misma base de datos."""
+    app = create_app()
+    with app.app_context():
+        url = str(db.engine.url)
+    # ConfigParser interpreta '%' como interpolación.
+    config.set_main_option("sqlalchemy.url", url.replace("%", "%%"))
+
+
+_configurar_url()
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
+# Los modelos se importan arriba para que db.metadata los tenga registrados.
 target_metadata = db.metadata
 
 # other values from the config, defined by the needs of env.py,
