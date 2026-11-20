@@ -34,4 +34,4 @@ def crear_usuario():
 @users_bp.delete("/usuarios/<int:id>")
 def borrar_usuario(id: int):
     delete_user(id)
-    return jsonify(eliminado=True), 204
+    return "", 204
