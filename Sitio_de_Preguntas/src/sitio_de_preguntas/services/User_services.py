@@ -25,3 +25,4 @@ def modify_user(id: int, name: str, email: str):
     user.email = email
     user.name = name
     db.session.commit()
+    return user

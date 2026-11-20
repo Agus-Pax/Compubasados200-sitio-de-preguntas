@@ -1,7 +1,8 @@
 from flask import Blueprint, abort, jsonify, request
 
+from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import User
-from sitio_de_preguntas.services.User_services import EmailYaEnUso, create_user, delete_user
+from sitio_de_preguntas.services.User_services import EmailYaEnUso, create_user, delete_user, modify_user
 
 users_bp = Blueprint("api_users", __name__, url_prefix="/api")
 
@@ -34,4 +35,22 @@ def crear_usuario():
 @users_bp.delete("/usuarios/<int:id>")
 def borrar_usuario(id: int):
     delete_user(id)
-    return jsonify(eliminado=True), 204
+    return jsonify(eliminado=True), 200
+
+@users_bp.patch("/usuarios/<int:id>")
+def modificar_usuario(id: int):
+    datos = request.get_json(silent=True) or {}
+    actual = db.get_or_404(User, id)
+    
+    nombre = datos.get("name", actual.name)
+    email = datos.get("email", actual.email)
+
+    if not isinstance(nombre, str) or not isinstance(email, str):
+        abort(400, description="nombre e email deben ser strings")
+
+    try:
+        usuario = modify_user(id, nombre, email)
+    except EmailYaEnUso:
+        abort(400, description="El email ya está en uso")
+    return jsonify(id=usuario.id, name=usuario.name, email=usuario.email), 200
+    
