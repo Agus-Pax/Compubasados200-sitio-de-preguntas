@@ -22,12 +22,14 @@ class Pregunta(db.Model):
     fecha_publicacion = db.Column(
         db.DateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
-    autor_id = db.Column(db.Integer, db.ForeignKey("autores.id"), nullable=False)
+    autor_id = db.Column(
+        db.Integer, db.ForeignKey("autores.id", ondelete="CASCADE"), nullable=False
+    )
     categoria_id = db.Column(
         db.Integer, db.ForeignKey("categorias.id"), nullable=False
     )
 
-    autor = db.relationship("Autor")
+    autor = db.relationship("Autor", back_populates="preguntas")
     categoria = db.relationship("Categoria")
     etiquetas = db.relationship("Etiqueta", secondary=pregunta_etiquetas)
     respuestas = db.relationship(

@@ -1,4 +1,5 @@
 from enum import Enum
+
 from sqlalchemy import func
 
 from sitio_de_preguntas.extensions import db
@@ -33,7 +34,8 @@ def _resolver(respuesta_id, usuario_id):
     respuesta = db.session.get(Respuesta, respuesta_id, with_for_update=True)
     if respuesta is None:
         raise RespuestaNoEncontrada(f"No existe la respuesta {respuesta_id}")
-    if respuesta.autor.usuario_id == usuario_id:
+    # User hereda de Autor: autor_id coincide con el id del usuario.
+    if respuesta.autor_id == usuario_id:
         raise VotoPropioNoPermitido("No podés votar tu propia respuesta")
     return respuesta
 

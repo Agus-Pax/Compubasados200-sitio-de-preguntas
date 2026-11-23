@@ -2,8 +2,13 @@ from flask import Blueprint, abort, jsonify, request
 
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import User
-
-from sitio_de_preguntas.services.User_services import EmailYaEnUso, UsuarioInvalido, create_user, delete_user, modify_user
+from sitio_de_preguntas.services.User_services import (
+    EmailYaEnUso,
+    UsuarioInvalido,
+    create_user,
+    delete_user,
+    modify_user,
+)
 from sitio_de_preguntas.services.validaciones import ValidacionError
 
 users_bp = Blueprint("api_users", __name__, url_prefix="/api")
@@ -16,6 +21,7 @@ def _bad_request(error):
 @users_bp.errorhandler(404)
 def _not_found(error):
     return jsonify(error="No encontrado"), 404
+
 
 @users_bp.get("/usuarios")
 def listar_usuarios():
@@ -38,10 +44,8 @@ def crear_usuario():
 
 @users_bp.delete("/usuarios/<int:id>")
 def borrar_usuario(id: int):
-    user = db.get_or_404(User, id)
-    datos = request.get_json(silent=True) or {}
     delete_user(id)
-    return jsonify(eliminado=True), 200
+    return "", 204
 
 @users_bp.patch("/usuarios/<int:id>")
 def modificar_usuario(id: int):

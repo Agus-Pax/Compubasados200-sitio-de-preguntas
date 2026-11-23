@@ -3,10 +3,10 @@ from datetime import timedelta
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
-from sitio_de_preguntas.utils import utcnow_naive
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import Autor, Pregunta, Respuesta, User, Voto
+from sitio_de_preguntas.models import User
 from sitio_de_preguntas.services.validaciones import validate_id
+from sitio_de_preguntas.utils import utcnow_naive
 
 MAX_NOMBRE = 120
 MAX_EMAIL = 255
@@ -28,10 +28,6 @@ class CuentaBloqueada(Exception):
 
 
 class EmailYaEnUso(ValueError):
-    pass
-
-
-class UsuarioConContenido(Exception):
     pass
 
 
@@ -96,28 +92,11 @@ def modify_user(user_id: int, name: str, email: str) -> User:
         raise
     return user
 
-
+# borra el autor, el usuario, sus preguntas y respuestas en cascada
 def delete_user(user_id: int) -> None:
     validate_id(user_id)
     user = db.get_or_404(User, user_id)
-    autor = Autor.query.filter_by(usuario_id=user.id).first()
-
-    if autor is not None:
-        tiene_contenido = (
-            Pregunta.query.filter_by(autor_id=autor.id).first() is not None
-            or Respuesta.query.filter_by(autor_id=autor.id).first() is not None
-        )
-        if tiene_contenido:
-            raise UsuarioConContenido(
-                f"El usuario {user_id} tiene preguntas o respuestas"
-            )
-    if Voto.query.filter_by(usuario_id=user.id).first() is not None:
-        raise UsuarioConContenido(f"El usuario {user_id} tiene votos registrados")
-
     try:
-        if autor is not None:
-            db.session.delete(autor)
-            db.session.flush()
         db.session.delete(user)
         db.session.commit()
     except Exception:
