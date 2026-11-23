@@ -4,11 +4,10 @@ from sitio_de_preguntas.extensions import db
 class Voto(db.Model):
     __tablename__ = "votos"
 
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     respuesta_id = db.Column(
-        db.Integer, db.ForeignKey("respuestas.id"), nullable=False, index=True
-    )
+            db.Integer, db.ForeignKey("respuestas.id"), primary_key=True, index=True
+        )
+    usuario_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
     valor = db.Column(db.Integer, nullable=False)
 
     __table_args__ = (

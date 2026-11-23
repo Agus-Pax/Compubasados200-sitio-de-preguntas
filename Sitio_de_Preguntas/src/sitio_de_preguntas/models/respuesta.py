@@ -1,7 +1,10 @@
 from datetime import UTC, datetime
 
 from sitio_de_preguntas.extensions import db
+from sitio_de_preguntas.models import voto
 
+from sqlalchemy import func, select
+from sqlalchemy.orm import column_property
 
 class Respuesta(db.Model):
     __tablename__ = "respuestas"
@@ -15,7 +18,12 @@ class Respuesta(db.Model):
         db.Integer, db.ForeignKey("preguntas.id"), nullable=False, index=True
     )
     autor_id = db.Column(db.Integer, db.ForeignKey("autores.id"), nullable=False)
-    votos = db.Column(db.Integer, nullable=False, default=0)
+    votos = column_property(
+        select(func.coalesce(func.sum(voto.valor), 0))
+        .where(voto.respuesta_id == id)
+        .correlate_except(voto)
+        .scalar_subquery()
+    )
 
     pregunta = db.relationship("Pregunta", back_populates="respuestas")
     autor = db.relationship("Autor")
