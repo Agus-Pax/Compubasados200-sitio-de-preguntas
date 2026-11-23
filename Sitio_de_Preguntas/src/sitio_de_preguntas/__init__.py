@@ -2,7 +2,7 @@ from flask import Flask
 
 from sitio_de_preguntas.config import Config
 from sitio_de_preguntas.extensions import db
-
+from sitio_de_preguntas.cli import respuestas_automaticas_command
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -10,6 +10,7 @@ def create_app(config_class=Config):
 
     db.init_app(app)
 
+    from sitio_de_preguntas.api.auth import auth_bp 
     from sitio_de_preguntas.api.catalogos import catalogos_bp
     from sitio_de_preguntas.api.health import health_bp
     from sitio_de_preguntas.api.questions import api_questions_bp
@@ -19,6 +20,10 @@ def create_app(config_class=Config):
     app.register_blueprint(users_bp)
     app.register_blueprint(catalogos_bp)
     app.register_blueprint(api_questions_bp)
+    app.register_blueprint(auth_bp)
+
+    app.cli.add_command(respuestas_automaticas_command)
+    
 
     return app
 
