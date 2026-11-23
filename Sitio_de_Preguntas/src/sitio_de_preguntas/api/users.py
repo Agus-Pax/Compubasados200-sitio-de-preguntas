@@ -2,7 +2,9 @@ from flask import Blueprint, abort, jsonify, request
 
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import User
-from sitio_de_preguntas.services.User_services import EmailYaEnUso, create_user, delete_user, modify_user
+
+from sitio_de_preguntas.services.User_services import EmailYaEnUso, UsuarioInvalido, create_user, delete_user, modify_user
+from sitio_de_preguntas.services.validaciones import ValidacionError
 
 users_bp = Blueprint("api_users", __name__, url_prefix="/api")
 
@@ -30,10 +32,14 @@ def crear_usuario():
         usuario = create_user(datos.get("name", ""), datos.get("email", ""))
     except EmailYaEnUso:
         abort(400, description="El email ya está en uso")
+    except (UsuarioInvalido, ValidacionError) as exc:
+        abort(400, description=str(exc))
     return jsonify(id=usuario.id, name=usuario.name, email=usuario.email), 201
 
 @users_bp.delete("/usuarios/<int:id>")
 def borrar_usuario(id: int):
+    user = db.get_or_404(User, id)
+    datos = request.get_json(silent=True) or {}
     delete_user(id)
     return jsonify(eliminado=True), 200
 
