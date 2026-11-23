@@ -16,7 +16,7 @@ class User(Autor):
     name = db.Column(db.String(120), nullable=False)
     email = db.Column(db.String(255), nullable=False, unique=True)
 
-    password_hash = db.Column(db.String(255), nullable=True)
+    password_hash = db.Column(db.String(255), nullable=False)
     failed_attempts = db.Column(
         db.Integer, nullable=False, default=0, server_default="0"
     )
@@ -36,8 +36,6 @@ class User(Autor):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
-        if not self.password_hash:
-            return False
         return check_password_hash(self.password_hash, password)
 
     def is_locked(self) -> bool:

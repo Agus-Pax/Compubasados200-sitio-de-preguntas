@@ -30,15 +30,20 @@ class CuentaBloqueada(Exception):
 class EmailYaEnUso(ValueError):
     pass
 
+#confirmar si la contraseña cumple con las restrcciones
+def _validar_password(password: str) -> str:
+    if not isinstance(password, str) or not password.strip():
+        raise UsuarioInvalido("la contraseña no puede estar vacía")
+    return password
 
-def create_user(name: str, email: str, password: str | None = None):
-    """``password`` es opcional para no romper los llamados existentes,
-    pero un usuario sin contraseña no puede iniciar sesión."""
-    if User.query.filter_by(email = email).first():
+
+def create_user(name: str, email: str, password: str) -> User:
+    name, email = _validar_datos(name, email)
+    password = _validar_password(password)
+    if User.query.filter_by(email=email).first():
         raise EmailYaEnUso
     user = User(name=name, email=email)
-    if password:
-        user.set_password(password)
+    user.set_password(password)
     db.session.add(user)
     db.session.commit()
     return user
@@ -102,10 +107,18 @@ def delete_user(user_id: int) -> None:
     except Exception:
         db.session.rollback()
         raise
+
 # --- autenticación ---
 
+#comprobar que la contraseña es la correcta para un usuario
+def verificar_password(user: User, password: object) -> bool:
+    if not isinstance(password, str):
+        return False
+    return user.check_password(password)
+
+
 def establecer_password(user: User, password: str) -> None:
-    """Úsala cuando un usuario cambie su contraseña (o para dársela por primera vez)."""
+    _validar_password(password)
     user.set_password(password)
     user.failed_attempts = 0
     user.locked_until = None
@@ -122,9 +135,11 @@ def autenticar(email: str, password: str) -> User:
     max_intentos = current_app.config["MAX_LOGIN_ATTEMPTS"]
     minutos = current_app.config["LOCK_MINUTES"]
 
+    email = email if isinstance(email, str) else ""
+    password = password if isinstance(password, str) else ""
+
     user = User.query.filter_by(email=email).first()
     if user is None:
-        # Mismo error que una contraseña mala: no revela qué emails existen.
         raise CredencialesInvalidas()
 
     # Bloqueo vencido -> se limpia.
