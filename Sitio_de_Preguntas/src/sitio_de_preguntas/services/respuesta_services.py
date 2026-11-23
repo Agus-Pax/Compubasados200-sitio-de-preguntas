@@ -2,10 +2,8 @@ from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import Pregunta, Respuesta,TipoRespuesta
 from sitio_de_preguntas.services.autor_services import get_autor
 from sitio_de_preguntas.services.fabrica_respuestas import FabricaConcretaRespuestas
+from sitio_de_preguntas.services.validaciones import validate_id
 class ContenidoDeRespuestaInvalido(ValueError):
-    pass
-
-class IDInvalido(ValueError):
     pass
 
 def crear_respuesta(pregunta_id, usuario_id, contenido) -> Respuesta:
@@ -55,13 +53,4 @@ def validar_contenido(contenido):
     c=contenido.strip()
     if not c:
         raise ContenidoDeRespuestaInvalido("espacio en blanco")
-    return
 
-def validate_id(id):
-    if id is None:
-        raise IDInvalido("id vacio")
-    if type(id) is not int:
-        raise IDInvalido("no es entero")
-    if id < 1:
-        raise IDInvalido("no existen ids negativos")
-    return

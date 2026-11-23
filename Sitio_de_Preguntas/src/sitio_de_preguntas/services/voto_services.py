@@ -3,7 +3,7 @@ from sqlalchemy import func
 
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import Respuesta, User, Voto
-from sitio_de_preguntas.services.autor_services import UsuarioNoEncontrado
+from sitio_de_preguntas.services.validaciones import validate_id
 
 
 class VotoInvalido(ValueError):
@@ -12,8 +12,12 @@ class VotoInvalido(ValueError):
 class RespuestaNoEncontrada(LookupError):
     pass
 
-class VotoPropioNoPermitido(ValueError):
+class VotoPropioNoPermitido(Exception):
     pass
+
+class UsuarioNoEncontrado(LookupError):
+    pass
+
 class TipoVoto(Enum):
     A_FAVOR = 1
     EN_CONTRA = -1
@@ -85,12 +89,3 @@ def obtener_voto_usuario(respuesta_id, usuario_id):
     return Voto.query.filter_by(
         respuesta_id=int(respuesta_id), usuario_id=int(usuario_id)
     ).first()
-
-def validate_id(id):
-    if id is None:
-        raise ValueError("id vacio")
-    if type(id) is not int:
-        raise ValueError("no es entero")
-    if id < 1:
-        raise ValueError("no existen ids negativos")
-    return

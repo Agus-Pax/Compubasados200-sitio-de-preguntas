@@ -1,9 +1,8 @@
 
-from sitio_de_preguntas.models import Pregunta
+from sitio_de_preguntas.models import Pregunta, Respuesta, TipoRespuesta
 from abc import ABC, abstractmethod
 
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import Respuesta,TipoRespuesta,Respuesta
 
 class TipoDeRespuestaNoSoportado(ValueError):
     pass
@@ -11,7 +10,7 @@ class TipoDeRespuestaNoSoportado(ValueError):
 
 class FabricaAbsRespuestas(ABC):
     @abstractmethod
-    def crear_respuesta(self, pregunta, autor, contenido, tipo="USUARIO"):
+    def crear_respuesta(self, pregunta, autor, contenido, tipo: TipoRespuesta):
         """Crea y persiste una respuesta asociada a una pregunta."""
 
 

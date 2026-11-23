@@ -2,6 +2,7 @@ from sqlalchemy.exc import IntegrityError
 
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import Autor, Pregunta, Respuesta, User, Voto
+from sitio_de_preguntas.services.validaciones import validate_id
 
 MAX_NOMBRE = 120
 MAX_EMAIL = 255
@@ -17,16 +18,6 @@ class EmailYaEnUso(ValueError):
 
 class UsuarioConContenido(Exception):
     pass
-
-
-# temporal: unificar con validate_id/IDInvalido del módulo compartido
-def validate_id(id):
-    if id is None:
-        raise UsuarioInvalido("id vacío")
-    if type(id) is not int:
-        raise UsuarioInvalido(f"el id debe ser entero: {id!r}")
-    if id < 1:
-        raise UsuarioInvalido(f"el id debe ser positivo: {id!r}")
 
 
 def _validar_email(email: str) -> None:

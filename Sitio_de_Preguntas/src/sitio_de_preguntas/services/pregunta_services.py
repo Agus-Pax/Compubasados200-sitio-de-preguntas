@@ -2,6 +2,7 @@ from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import Categoria, Etiqueta, Pregunta
 from sitio_de_preguntas.services.autor_services import get_autor
 from sitio_de_preguntas.services.etiqueta_services import obtener_etiquetas
+from sitio_de_preguntas.services.validaciones import validate_id
 
 
 class DatosDePreguntaInvalidos(ValueError):
@@ -97,14 +98,6 @@ def listar_preguntas(categoria_id=None, etiqueta_id=None):
 
 
 def obtener_pregunta(id: int) -> Pregunta:
+    validate_id(id)
     return db.get_or_404(Pregunta, id)
 
-#value error es temporal
-def validate_id(id):
-    if id is None:
-        raise ValueError("id vacio")
-    if type(id) is not int:
-        raise ValueError("no es entero")
-    if id < 1:
-        raise ValueError("no existen ids negativos")
-    return
