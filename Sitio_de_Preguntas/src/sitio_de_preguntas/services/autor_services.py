@@ -1,26 +1,25 @@
+from sqlalchemy.exc import IntegrityError
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import Autor, User
 
 
-class UsuarioNoEncontrado(LookupError):
+class AutorNoEncontrado(ValueError):
     pass
 
+def get_autor(user_id:int) -> Autor:
+    __validate_id(user_id)
+    auth = Autor.query.filter_by(usuario_id=user_id).first()
+    if auth is not None:
+        return auth
+    else:
+        raise AutorNoEncontrado
 
-def obtener_o_crear_autor(usuario_id: int) -> Autor:
-    """Devuelve el autor humano de un usuario, creándolo si todavía no existe.
+def __validate_id(user_id:int):
+    if user_id is None:
+        raise ValueError("valor vacio")
+    if type(user_id) is not int:
+        raise ValueError("valor no entero")
+    if user_id < 0:
+        raise ValueError("id negativo")
+    return
 
-    La función hace ``flush`` pero no hace ``commit``: quien la llama debe
-    confirmar la transacción junto con la pregunta o respuesta creada.
-    """
-    usuario_id = int(usuario_id)
-    autor = Autor.query.filter_by(usuario_id=usuario_id).first()
-    if autor is not None:
-        return autor
-
-    if db.session.get(User, usuario_id) is None:
-        raise UsuarioNoEncontrado(f"No existe el usuario con id {usuario_id}")
-
-    autor = Autor(usuario_id=usuario_id)
-    db.session.add(autor)
-    db.session.flush()
-    return autor

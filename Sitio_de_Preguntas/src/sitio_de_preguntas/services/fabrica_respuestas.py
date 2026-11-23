@@ -1,8 +1,9 @@
+
+from sitio_de_preguntas.models import Pregunta
 from abc import ABC, abstractmethod
 
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import Respuesta
-
+from sitio_de_preguntas.models import Respuesta,TipoRespuesta,Respuesta
 
 class TipoDeRespuestaNoSoportado(ValueError):
     pass
@@ -25,6 +26,8 @@ class StrategyUsuario(StrategyRespuesta):
         return Respuesta(contenido=contenido, pregunta=pregunta, autor=autor)
 
 
+
+
 class FabricaConcretaRespuestas(FabricaAbsRespuestas):
     """Elige la estrategia indicada por ``tipo`` (enum ``tipo_rta`` del diagrama).
 
@@ -36,10 +39,11 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
         self._estrategias = (
             estrategias
             if estrategias is not None
-            else {"USUARIO": StrategyUsuario()}
+            else {TipoRespuesta.USUARIO : StrategyUsuario()}
+            #completar con soporte para llm
         )
 
-    def crear_respuesta(self, pregunta, autor, contenido, tipo="USUARIO"):
+    def crear_respuesta(self, pregunta:Pregunta, autor, contenido:str, tipo:TipoRespuesta):
         estrategia = self._estrategias.get(tipo)
         if estrategia is None:
             raise TipoDeRespuestaNoSoportado(
@@ -47,5 +51,5 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
             )
         respuesta = estrategia.crear_respuesta(pregunta, autor, contenido)
         db.session.add(respuesta)
-        db.session.commit()
+        db.session.flush()
         return respuesta
