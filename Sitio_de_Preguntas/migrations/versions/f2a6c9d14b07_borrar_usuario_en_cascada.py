@@ -10,6 +10,11 @@ Ahora se puede borrar un usuario aunque tenga preguntas, respuestas o votos:
   ``column_property`` calculado) y si no, falla cualquier INSERT en una BD
   migrada.
 
+* ``votos`` pasa a tener como PK ``(respuesta_id, usuario_id)`` y pierde la
+  columna ``id`` que venía del esquema inicial, para coincidir con el modelo
+  ``Voto``. Al recrear la tabla solo se copian las columnas de ``copy_from``,
+  así que el ``id`` viejo no se arrastra.  
+
 En SQLite hay que recrear las tablas para cambiar una FK; por eso se usa el
 modo batch con ``copy_from`` (para no perder índices ni constraints).
 
@@ -72,9 +77,8 @@ def _meta() -> sa.MetaData:
     sa.Table(
         "votos",
         meta,
-        sa.Column("id", sa.Integer, primary_key=True),
-        sa.Column("usuario_id", sa.Integer, nullable=False),
-        sa.Column("respuesta_id", sa.Integer, nullable=False),
+        sa.Column("respuesta_id", sa.Integer, primary_key=True),
+        sa.Column("usuario_id", sa.Integer, primary_key=True),
         sa.Column("valor", sa.Integer, nullable=False),
         sa.Index("ix_votos_respuesta_id", "respuesta_id"),
         sa.CheckConstraint("valor IN (-1, 1)", name="ck_voto_valor"),
