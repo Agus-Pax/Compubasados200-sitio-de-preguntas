@@ -1,6 +1,9 @@
 from ..extensions import db
 
 
+#cada usuario se relaciona con al menos un autor, la creacion
+#de usuarios y autores va ligada, cada alta de un usuario implica el alta de un autor
+#un agente tambien es autor, por tanto no se liga a un usuario, id nulleable.
 class Autor(db.Model):
     __tablename__ = "autores"
 
@@ -19,13 +22,3 @@ class Autor(db.Model):
 
     def can_ask(self) -> bool:
         return not self.es_agente
-
-    def crear_respuesta(self, pregunta, contenido, tipo="USUARIO"):
-        """El autor es quien usa la fábrica para crear sus respuestas."""
-        from sitio_de_preguntas.services.fabrica_respuestas import (
-            FabricaConcretaRespuestas,
-        )
-
-        return FabricaConcretaRespuestas().crear_respuesta(
-            pregunta=pregunta, autor=self, contenido=contenido, tipo=tipo
-        )
