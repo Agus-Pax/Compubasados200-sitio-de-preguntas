@@ -1,10 +1,11 @@
 from flask import current_app
 
+from sitio_de_preguntas.models import TipoRespuesta
 from sitio_de_preguntas.services.ia.strategy_ia import StrategyIA
 
 
 class Claude(StrategyIA):
-    tipo = "CLAUDE"
+    tipo = TipoRespuesta.CLAUDE
 
     def generar_texto(self, prompt: str) -> str:
         import anthropic  # pip install anthropic

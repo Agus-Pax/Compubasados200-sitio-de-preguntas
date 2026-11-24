@@ -1,10 +1,11 @@
 from flask import current_app
 
+from sitio_de_preguntas.models import TipoRespuesta
 from sitio_de_preguntas.services.ia.strategy_ia import StrategyIA
 
 
 class Gemini(StrategyIA):
-    tipo = "GEMINI"
+    tipo = TipoRespuesta.GEMINI
 
     def generar_texto(self, prompt: str) -> str:
         from google import genai  # pip install google-genai
