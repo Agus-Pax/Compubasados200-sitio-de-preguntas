@@ -1,6 +1,10 @@
 from datetime import UTC, datetime
 
+from sqlalchemy import func, select
+from sqlalchemy.orm import column_property
+
 from sitio_de_preguntas.extensions import db
+from sitio_de_preguntas.models.voto import Voto
 
 
 class Respuesta(db.Model):
@@ -12,13 +16,24 @@ class Respuesta(db.Model):
         db.DateTime, nullable=False, default=lambda: datetime.now(UTC)
     )
     pregunta_id = db.Column(
-        db.Integer, db.ForeignKey("preguntas.id"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("preguntas.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    autor_id = db.Column(db.Integer, db.ForeignKey("autores.id"), nullable=False)
-    votos = db.Column(db.Integer, nullable=False, default=0)
+    autor_id = db.Column(
+        db.Integer, db.ForeignKey("autores.id", ondelete="CASCADE"), nullable=False
+    )
+    #atributo calculado para garantizar consistencia
+    votos = column_property(
+        select(func.coalesce(func.sum(Voto.valor), 0))
+        .where(Voto.respuesta_id == id)
+        .correlate_except(Voto)
+        .scalar_subquery()
+    )
 
     pregunta = db.relationship("Pregunta", back_populates="respuestas")
-    autor = db.relationship("Autor")
+    autor = db.relationship("Autor", back_populates="respuestas")
     votos_usuarios = db.relationship(
         "Voto", back_populates="respuesta", cascade="all, delete-orphan"
     )

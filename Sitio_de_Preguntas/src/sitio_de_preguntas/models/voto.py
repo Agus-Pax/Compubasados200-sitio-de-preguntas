@@ -4,10 +4,14 @@ from sitio_de_preguntas.extensions import db
 class Voto(db.Model):
     __tablename__ = "votos"
 
-    id = db.Column(db.Integer, primary_key=True)
-    usuario_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     respuesta_id = db.Column(
-        db.Integer, db.ForeignKey("respuestas.id"), nullable=False, index=True
+        db.Integer,
+        db.ForeignKey("respuestas.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
+    )
+    usuario_id = db.Column(
+        db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True
     )
     valor = db.Column(db.Integer, nullable=False)
 
@@ -18,7 +22,7 @@ class Voto(db.Model):
         db.CheckConstraint("valor IN (-1, 1)", name="ck_voto_valor"),
     )
 
-    usuario = db.relationship("User")
+    usuario = db.relationship("User", back_populates="votos")
     respuesta = db.relationship("Respuesta", back_populates="votos_usuarios")
 
     def __repr__(self) -> str:

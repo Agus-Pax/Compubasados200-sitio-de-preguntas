@@ -1,10 +1,11 @@
-from sitio_de_preguntas.models.autor import Autor
-from sitio_de_preguntas.models.categoria import Categoria
-from sitio_de_preguntas.models.etiqueta import Etiqueta
-from sitio_de_preguntas.models.pregunta import Pregunta
-from sitio_de_preguntas.models.respuesta import Respuesta
-from sitio_de_preguntas.models.user import User
-from sitio_de_preguntas.models.voto import Voto
+from .autor import Autor
+from .categoria import Categoria
+from .etiqueta import Etiqueta
+from .pregunta import Pregunta, pregunta_etiquetas
+from .respuesta import Respuesta
+from .tipo_respuesta import TipoRespuesta
+from .user import User
+from .voto import Voto
 
 __all__ = [
     "Autor",
@@ -12,6 +13,8 @@ __all__ = [
     "Etiqueta",
     "Pregunta",
     "Respuesta",
+    "TipoRespuesta",
     "User",
     "Voto",
+    "pregunta_etiquetas",
 ]

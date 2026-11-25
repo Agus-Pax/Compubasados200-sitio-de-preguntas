@@ -1,26 +1,16 @@
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import Autor, User
+from sitio_de_preguntas.models import User
+from sitio_de_preguntas.services.validaciones import validate_id
 
 
-class UsuarioNoEncontrado(LookupError):
+class AutorNoEncontrado(ValueError):
     pass
 
 
-def obtener_o_crear_autor(usuario_id: int) -> Autor:
-    """Devuelve el autor humano de un usuario, creándolo si todavía no existe.
-
-    La función hace ``flush`` pero no hace ``commit``: quien la llama debe
-    confirmar la transacción junto con la pregunta o respuesta creada.
-    """
-    usuario_id = int(usuario_id)
-    autor = Autor.query.filter_by(usuario_id=usuario_id).first()
-    if autor is not None:
-        return autor
-
-    if db.session.get(User, usuario_id) is None:
-        raise UsuarioNoEncontrado(f"No existe el usuario con id {usuario_id}")
-
-    autor = Autor(usuario_id=usuario_id)
-    db.session.add(autor)
-    db.session.flush()
+def get_autor(user_id: int) -> User:
+    """Devuelve el usuario como Autor (User ya hereda de Autor)."""
+    validate_id(user_id)
+    autor = db.session.get(User, user_id)
+    if autor is None:
+        raise AutorNoEncontrado(f"No existe un usuario con id {user_id}")
     return autor

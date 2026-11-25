@@ -1,13 +1,12 @@
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models.user import User
-from sitio_de_preguntas.services.User_services import establecer_password
 
 
 def crear_ana():
     u = User(name="Ana", email="a@a.com")
+    u.set_password("secreta")
     db.session.add(u)
     db.session.commit()
-    establecer_password(u, "secreta")
     return u
 
 

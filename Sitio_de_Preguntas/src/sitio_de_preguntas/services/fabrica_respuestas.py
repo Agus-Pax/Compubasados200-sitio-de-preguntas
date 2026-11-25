@@ -1,8 +1,13 @@
+
+from sitio_de_preguntas.models import Pregunta, Respuesta, TipoRespuesta
 from abc import ABC, abstractmethod
 
 from sitio_de_preguntas.extensions import db
+<<<<<<< HEAD
 from sitio_de_preguntas.models import Pregunta, Respuesta, TipoRespuesta
 
+=======
+>>>>>>> main
 
 class TipoDeRespuestaNoSoportado(ValueError):
     pass
@@ -25,6 +30,8 @@ class StrategyUsuario(StrategyRespuesta):
         return Respuesta(contenido=contenido, pregunta=pregunta, autor=autor)
 
 
+
+
 class FabricaConcretaRespuestas(FabricaAbsRespuestas):
     """Elige la estrategia indicada por ``tipo`` (enum ``TipoRespuesta``).
 
@@ -37,6 +44,7 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
         self._estrategias = (
             estrategias
             if estrategias is not None
+<<<<<<< HEAD
             else self._estrategias_por_defecto()
         )
 
@@ -51,6 +59,13 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
     def crear_respuesta(self, pregunta: Pregunta, autor, contenido: str, tipo: TipoRespuesta):
         """Crea la respuesta y la deja en la sesión (flush). El commit lo hace
         quien llama."""
+=======
+            else {TipoRespuesta.USUARIO : StrategyUsuario()}
+            #completar con soporte para llm
+        )
+
+    def crear_respuesta(self, pregunta:Pregunta, autor, contenido:str, tipo:TipoRespuesta):
+>>>>>>> main
         estrategia = self._estrategias.get(tipo)
         if estrategia is None:
             raise TipoDeRespuestaNoSoportado(
@@ -59,4 +74,8 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
         respuesta = estrategia.crear_respuesta(pregunta, autor, contenido)
         db.session.add(respuesta)
         db.session.flush()
+<<<<<<< HEAD
         return respuesta
+=======
+        return respuesta
+>>>>>>> main

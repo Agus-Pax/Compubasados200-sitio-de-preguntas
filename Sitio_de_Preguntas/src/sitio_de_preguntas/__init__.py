@@ -15,12 +15,14 @@ def create_app(config_class=Config):
     from sitio_de_preguntas.api.health import health_bp
     from sitio_de_preguntas.api.questions import api_questions_bp
     from sitio_de_preguntas.api.users import users_bp
+    from sitio_de_preguntas.web.auth import web_bp
 
     app.register_blueprint(health_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(catalogos_bp)
     app.register_blueprint(api_questions_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(web_bp)
 
     app.cli.add_command(respuestas_automaticas_command)
     
