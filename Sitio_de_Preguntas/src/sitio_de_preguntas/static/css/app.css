@@ -1,0 +1,593 @@
+/* ==========================================================================
+   1. Tokens de diseño
+   Para cambiar la paleta o la tipografía, modificá solo esta sección.
+   ========================================================================== */
+:root {
+  /* Colores principales y secundarios */
+  --color-primary: #123c55;
+  --color-primary-dark: #0b2a3d;
+  --color-primary-light: #1d5e7e;
+  --color-accent: #d5a437;
+
+  /* Fondos y superficies */
+  --color-bg: #eef3f6;
+  --color-bg-accent: #dbe9ef;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f9fb;
+
+  /* Textos */
+  --color-text: #172b3a;
+  --color-text-muted: #5b7180;
+  --color-text-on-primary: #ffffff;
+  --color-text-on-primary-muted: rgba(255, 255, 255, 0.78);
+  --color-text-placeholder: #8aa0ad;
+
+  /* Bordes y estados */
+  --color-border: #d3dfe6;
+  --color-focus: rgba(29, 94, 126, 0.25);
+  --color-shadow: rgba(11, 42, 61, 0.14);
+  --color-brand-line: rgba(255, 255, 255, 0.16);
+  --color-error: #b3261e;
+  --color-error-bg: #fdecea;
+  --color-error-border: #f2b8b5;
+  --color-success: #1b6b4a;
+  --color-success-bg: #e6f4ed;
+  --color-success-border: #a9d8be;
+
+  /* Tipografía */
+  --font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-family-display: Georgia, "Times New Roman", serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xl: clamp(1.6rem, 4vw, 2.35rem);
+  --font-size-display: clamp(2rem, 5vw, 2.9rem);
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-base: 1.5;
+  --line-height-tight: 1.18;
+
+  /* Espaciado, bordes y transiciones */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --transition: 160ms ease;
+}
+
+/* ==========================================================================
+   2. Base
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-base);
+  color: var(--color-text);
+  background:
+    radial-gradient(circle at 12% 15%, var(--color-bg-accent), transparent 34%),
+    radial-gradient(circle at 88% 85%, var(--color-bg-accent), transparent 30%),
+    var(--color-bg);
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   3. Elementos compartidos
+   ========================================================================== */
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6) var(--space-4);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  color: var(--color-primary-dark);
+  background: var(--color-accent);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.mark--small {
+  width: 44px;
+  height: 44px;
+  font-size: var(--font-size-xl);
+}
+
+.eyebrow {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-primary-light);
+}
+
+.eyebrow--accent {
+  color: var(--color-accent);
+}
+
+.description {
+  margin-bottom: 0;
+  color: var(--color-text-muted);
+}
+
+.auth-link {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-light);
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
+
+.auth-link:focus-visible {
+  outline: 3px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+
+.auth-card__header h1,
+.profile__header h1 {
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  color: var(--color-primary-dark);
+}
+
+/* ==========================================================================
+   4. Tarjeta de autenticación (login y registro)
+   ========================================================================== */
+.auth-card {
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  width: min(100%, 960px);
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px var(--color-shadow);
+}
+
+.auth-card__intro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-7) var(--space-6);
+  color: var(--color-text-on-primary);
+  background: linear-gradient(
+    155deg,
+    var(--color-primary-dark),
+    var(--color-primary) 55%,
+    var(--color-primary-light)
+  );
+}
+
+.auth-card__intro > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-card__intro::after {
+  content: "";
+  position: absolute;
+  right: -110px;
+  bottom: -110px;
+  width: 300px;
+  height: 300px;
+  border: 1px solid var(--color-brand-line);
+  border-radius: 50%;
+  box-shadow: 0 0 0 42px var(--color-brand-line);
+  pointer-events: none;
+}
+
+.auth-card__tagline {
+  margin-bottom: 0;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-tight);
+}
+
+.auth-card__text {
+  max-width: 34ch;
+  margin-bottom: 0;
+  color: var(--color-text-on-primary-muted);
+}
+
+.auth-card__note {
+  max-width: 32ch;
+  margin: auto 0 0;
+  padding-left: var(--space-4);
+  border-left: 3px solid var(--color-accent);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-on-primary-muted);
+}
+
+.auth-card__panel {
+  padding: var(--space-7) var(--space-6);
+}
+
+.auth-card__header {
+  margin-bottom: var(--space-6);
+}
+
+.auth-card__errors {
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  background: var(--color-error-bg);
+  border: 1px solid var(--color-error-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+}
+
+.auth-card__errors-title {
+  margin-bottom: var(--space-1);
+  font-weight: var(--font-weight-bold);
+}
+
+.auth-card__errors ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.auth-card__hint {
+  margin: var(--space-5) 0 0;
+  font-size: var(--font-size-sm);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+/* ==========================================================================
+   5. Campos del formulario
+   ========================================================================== */
+.field {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.field__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.field__control {
+  position: relative;
+  display: flex;
+}
+
+.field__input {
+  width: 100%;
+  min-height: 50px;
+  padding: var(--space-3) var(--space-7) var(--space-3) var(--space-4);
+  font: inherit;
+  color: var(--color-text);
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.field__input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.field__input:hover {
+  border-color: var(--color-primary-light);
+}
+
+.field__input:focus-visible {
+  outline: none;
+  background: var(--color-surface);
+  border-color: var(--color-primary-light);
+  box-shadow: 0 0 0 4px var(--color-focus);
+}
+
+.field__input[aria-invalid="true"] {
+  background: var(--color-error-bg);
+  border-color: var(--color-error);
+}
+
+.field__toggle {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2);
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--transition),
+    background-color var(--transition);
+}
+
+.field__toggle:hover {
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+
+.field__toggle:focus-visible {
+  outline: 3px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+
+.field__icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.field__toggle[aria-pressed="false"] .field__icon--eye-off,
+.field__toggle[aria-pressed="true"] .field__icon--eye {
+  display: none;
+}
+
+.field__error {
+  margin-bottom: 0;
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   6. Botones
+   ========================================================================== */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-5);
+  font: inherit;
+  font-weight: var(--font-weight-semibold);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    border-color var(--transition),
+    transform var(--transition),
+    box-shadow var(--transition);
+}
+
+.button--block {
+  width: 100%;
+}
+
+.button--primary {
+  color: var(--color-text-on-primary);
+  background: var(--color-primary);
+  box-shadow: 0 8px 18px var(--color-shadow);
+}
+
+.button--primary:hover {
+  background: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+.button--primary:active {
+  transform: translateY(0);
+}
+
+.button--secondary {
+  color: var(--color-primary);
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+.button--secondary:hover {
+  background: var(--color-surface-muted);
+  border-color: var(--color-primary);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--color-primary-light);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   7. Perfil
+   ========================================================================== */
+.profile {
+  width: min(100%, 620px);
+}
+
+.profile__header {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+
+.profile__header h1 {
+  margin-bottom: 0;
+}
+
+.profile__card {
+  padding: var(--space-6);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px var(--color-shadow);
+}
+
+.profile__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 56px;
+  height: 56px;
+  border-radius: 50%;
+  color: var(--color-primary-dark);
+  background: var(--color-accent);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.profile__identity-text {
+  margin-bottom: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.profile__identity-text strong {
+  display: block;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+.profile__data {
+  margin: var(--space-5) 0;
+}
+
+.profile__row {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.4fr) 1fr;
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile__row dt {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-muted);
+}
+
+.profile__row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   8. Mensajes flash
+   ========================================================================== */
+.flash-messages {
+  position: fixed;
+  top: var(--space-4);
+  right: var(--space-4);
+  z-index: 10;
+  display: grid;
+  gap: var(--space-2);
+  width: min(360px, calc(100vw - 2 * var(--space-4)));
+}
+
+.flash {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+
+.flash--info,
+.flash--success {
+  border: 1px solid var(--color-success-border);
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+/* ==========================================================================
+   9. Responsive
+   ========================================================================== */
+@media (max-width: 780px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card__intro {
+    gap: var(--space-2);
+    padding: var(--space-5);
+  }
+
+  .auth-card__tagline {
+    font-size: var(--font-size-xl);
+  }
+
+  .auth-card__text,
+  .auth-card__note {
+    display: none;
+  }
+
+  .auth-card__panel {
+    padding: var(--space-6) var(--space-5);
+  }
+}
+
+@media (max-width: 420px) {
+  .page {
+    padding: var(--space-3);
+  }
+
+  .profile__card {
+    padding: var(--space-5) var(--space-4);
+  }
+
+  .profile__row {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
