@@ -1,40 +1,39 @@
-"""Registra las estrategias IA en FabricaConcretaRespuestas segun la configuracion."""
-from importlib import import_module
-
+"""Qué LLM hay disponibles y cuál está elegido en la configuración."""
 from flask import current_app
 
-from sitio_de_preguntas.services.fabrica_respuestas import (
-    FabricaConcretaRespuestas,
-    StrategyUsuario,
-    TipoDeRespuestaNoSoportado,
-)
+from sitio_de_preguntas.models import TipoRespuesta
+from sitio_de_preguntas.services.fabrica_respuestas import TipoDeRespuestaNoSoportado
+from sitio_de_preguntas.services.ia.chatgpt import ChatGPT
+from sitio_de_preguntas.services.ia.claude import Claude
+from sitio_de_preguntas.services.ia.gemini import Gemini
 
-# tipo_rta -> (modulo, clase). Import perezoso: solo se carga el SDK del LLM elegido.
-_ESTRATEGIAS_IA = {
-    "CLAUDE": ("sitio_de_preguntas.services.ia.claude", "Claude"),
-    "GEMINI": ("sitio_de_preguntas.services.ia.gemini", "Gemini"),
-    "CHAT_GPT": ("sitio_de_preguntas.services.ia.chatgpt", "ChatGPT"),
-}
+# Para sumar un LLM nuevo: crear su clase (hereda de StrategyIA) y agregarla acá.
+# Los SDK se importan recién al generar texto, así que no hace falta tenerlos todos.
+_CLASES_IA = (Claude, Gemini, ChatGPT)
 
 
-def tipo_configurado() -> str:
-    """Tipo de LLM elegido en LLM_PROVIDER (CLAUDE | GEMINI | CHAT_GPT)."""
-    return current_app.config["LLM_PROVIDER"].upper()
+def estrategias_ia() -> dict:
+    """{TipoRespuesta: StrategyIA} con todos los LLM soportados."""
+    return {clase.tipo: clase() for clase in _CLASES_IA}
 
 
-def crear_estrategia_ia(tipo: str):
-    try:
-        modulo, clase = _ESTRATEGIAS_IA[tipo.upper()]
-    except KeyError:
+def tipo_ia(valor) -> TipoRespuesta:
+    """Convierte a TipoRespuesta (acepta texto) y valida que sea un LLM."""
+    if isinstance(valor, TipoRespuesta):
+        tipo = valor
+    else:
+        try:
+            tipo = TipoRespuesta[str(valor).strip().upper()]
+        except KeyError:
+            tipo = None
+    if tipo not in {clase.tipo for clase in _CLASES_IA}:
+        opciones = ", ".join(clase.tipo.name for clase in _CLASES_IA)
         raise TipoDeRespuestaNoSoportado(
-            f"LLM '{tipo}' no soportado. Opciones: {', '.join(_ESTRATEGIAS_IA)}"
-        ) from None
-    return getattr(import_module(modulo), clase)()
+            f"'{valor}' no es un LLM soportado. Opciones: {opciones}"
+        )
+    return tipo
 
 
-def construir_fabrica(tipo: str | None = None) -> FabricaConcretaRespuestas:
-    """Tu fabrica con USUARIO + el LLM elegido registrados como estrategias."""
-    tipo = (tipo or tipo_configurado()).upper()
-    return FabricaConcretaRespuestas(
-        estrategias={"USUARIO": StrategyUsuario(), tipo: crear_estrategia_ia(tipo)}
-    )
+def tipo_configurado() -> TipoRespuesta:
+    """LLM elegido en LLM_PROVIDER (CLAUDE | GEMINI | GPT)."""
+    return tipo_ia(current_app.config["LLM_PROVIDER"])

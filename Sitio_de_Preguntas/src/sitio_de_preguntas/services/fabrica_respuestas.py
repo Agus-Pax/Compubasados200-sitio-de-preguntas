@@ -1,8 +1,8 @@
-
-from sitio_de_preguntas.models import Pregunta, Respuesta, TipoRespuesta
 from abc import ABC, abstractmethod
 
 from sitio_de_preguntas.extensions import db
+from sitio_de_preguntas.models import Autor, Pregunta, Respuesta, TipoRespuesta
+
 
 class TipoDeRespuestaNoSoportado(ValueError):
     pass
@@ -10,44 +10,56 @@ class TipoDeRespuestaNoSoportado(ValueError):
 
 class FabricaAbsRespuestas(ABC):
     @abstractmethod
-    def crear_respuesta(self, pregunta, autor, contenido, tipo: TipoRespuesta):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str, tipo: TipoRespuesta
+    ) -> Respuesta:
         """Crea y persiste una respuesta asociada a una pregunta."""
 
 
 class StrategyRespuesta(ABC):
     @abstractmethod
-    def crear_respuesta(self, pregunta, autor, contenido):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str
+    ) -> Respuesta:
         """Construye la respuesta concreta según la estrategia."""
 
 
 class StrategyUsuario(StrategyRespuesta):
-    def crear_respuesta(self, pregunta, autor, contenido):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str
+    ) -> Respuesta:
         return Respuesta(contenido=contenido, pregunta=pregunta, autor=autor)
 
 
 
 
 class FabricaConcretaRespuestas(FabricaAbsRespuestas):
-    """Elige la estrategia indicada por ``tipo`` (enum ``tipo_rta`` del diagrama).
+    """Elige la estrategia indicada por ``tipo`` (enum ``TipoRespuesta``).
 
-    Por ahora sólo está registrada la estrategia de respuesta humana (USUARIO).
-    Las estrategias de generación (LLM/agente) se registran aparte.
+    Por defecto registra USUARIO y todos los LLM soportados (CLAUDE, GEMINI,
+    GPT). Qué LLM se usa lo decide quien llama mediante ``tipo`` (sale de la
+    configuración LLM_PROVIDER): cambiar de LLM no requiere tocar código.
     """
 
-    def __init__(self, estrategias=None):
+    def __init__(self, estrategias: dict | None = None):
         self._estrategias = (
             estrategias
             if estrategias is not None
-            else {TipoRespuesta.USUARIO : StrategyUsuario()}
-            #completar con soporte para llm
+            else self._estrategias_por_defecto()
         )
 
-    def crear_respuesta(self, pregunta:Pregunta, autor, contenido:str, tipo:TipoRespuesta):
+    @staticmethod
+    def _estrategias_por_defecto() -> dict:
+        # Import acá (y no arriba) para evitar un import circular: las
+        # estrategias IA heredan de StrategyRespuesta, definida en este módulo.
+        from sitio_de_preguntas.services.ia.registro import estrategias_ia
+
+        return {TipoRespuesta.USUARIO: StrategyUsuario(), **estrategias_ia()}
+
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str, tipo: TipoRespuesta
+    ) -> Respuesta:
+        """Crea la respuesta y la deja en la sesión (flush). El commit lo hace
+        quien llama."""
         estrategia = self._estrategias.get(tipo)
         if estrategia is None:
-            raise TipoDeRespuestaNoSoportado(
-                f"Tipo de respuesta no soportado: {tipo}"
-            )
+            raise TipoDeRespuestaNoSoportado(f"Tipo de respuesta no soportado: {tipo}")
         respuesta = estrategia.crear_respuesta(pregunta, autor, contenido)
         db.session.add(respuesta)
         db.session.flush()

@@ -1,15 +1,15 @@
-"""StrategyIA del diagrama: estrategia de tu fabrica que genera el texto con un LLM."""
+"""StrategyIA del diagrama: estrategia de tu fábrica que genera el texto con un LLM."""
 from abc import abstractmethod
 
-from sitio_de_preguntas.models import Respuesta
+from sitio_de_preguntas.models import Respuesta, TipoRespuesta
 from sitio_de_preguntas.services.fabrica_respuestas import StrategyRespuesta
 
 PROMPT = (
     "Sos un asistente de un sitio de preguntas y respuestas. "
-    "Responde en espaniol, de forma clara, correcta y concisa.\n\n"
-    "Categoria: {categoria}\n"
+    "Respondé en español, de forma clara, correcta y concisa.\n\n"
+    "Categoría: {categoria}\n"
     "Etiquetas: {etiquetas}\n"
-    "Titulo de la pregunta: {titulo}\n"
+    "Título de la pregunta: {titulo}\n"
     "Detalle: {contenido}"
 )
 
@@ -19,8 +19,8 @@ class RespuestaIAVacia(Exception):
 
 
 class StrategyIA(StrategyRespuesta):
-    #: clave del enum tipo_rta (CLAUDE, GEMINI, CHAT_GPT). El Autor-agente usa tipo.lower().
-    tipo: str
+    #: miembro del enum TipoRespuesta al que corresponde (CLAUDE, GEMINI, GPT)
+    tipo: TipoRespuesta
 
     @abstractmethod
     def generar_texto(self, prompt: str) -> str:
@@ -39,5 +39,5 @@ class StrategyIA(StrategyRespuesta):
         # `contenido` se ignora: lo genera el LLM a partir de la pregunta.
         texto = (self.generar_texto(self.construir_prompt(pregunta)) or "").strip()
         if not texto:
-            raise RespuestaIAVacia(f"{self.tipo} devolvio una respuesta vacia")
+            raise RespuestaIAVacia(f"{self.tipo.name} devolvió una respuesta vacía")
         return Respuesta(contenido=texto, pregunta=pregunta, autor=autor)

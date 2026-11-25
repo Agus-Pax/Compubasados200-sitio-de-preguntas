@@ -1,17 +1,27 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import User
-from sitio_de_preguntas.services.validaciones import validate_id
 from sitio_de_preguntas.utils import utcnow_naive
+from sitio_de_preguntas.services.validaciones import validate_id
 
 MAX_NOMBRE = 120
 MAX_EMAIL = 255
+MIN_PASSWORD = 8
+MAX_PASSWORD = 128
 
 class UsuarioInvalido(ValueError):
+    pass
+
+
+class PasswordInvalida(UsuarioInvalido):
+    pass
+
+
+class EmailYaEnUso(ValueError):
     pass
 
 
@@ -25,28 +35,6 @@ class CuentaBloqueada(Exception):
     def __init__(self, hasta):
         self.hasta = hasta
         super().__init__("Cuenta bloqueada temporalmente")
-
-
-class EmailYaEnUso(ValueError):
-    pass
-
-#confirmar si la contraseña cumple con las restrcciones
-def _validar_password(password: str) -> str:
-    if not isinstance(password, str) or not password.strip():
-        raise UsuarioInvalido("la contraseña no puede estar vacía")
-    return password
-
-
-def create_user(name: str, email: str, password: str) -> User:
-    name, email = _validar_datos(name, email)
-    password = _validar_password(password)
-    if User.query.filter_by(email=email).first():
-        raise EmailYaEnUso
-    user = User(name=name, email=email)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-    return user
 
 
 def _validar_email(email: str) -> None:
@@ -77,6 +65,48 @@ def _validar_datos(name, email):
     _validar_email(email)
     return name, email
 
+#confirmar si la contraseña cumple con las restrcciones
+def _validar_password(password: str) -> str:
+    """Confirma que la contraseña cumple las restricciones (no la hashea)."""
+    if type(password) is not str:
+        raise PasswordInvalida("la contraseña debe ser texto")
+    if not password.strip():
+        raise PasswordInvalida("la contraseña no puede estar vacía")
+    if not MIN_PASSWORD <= len(password) <= MAX_PASSWORD:
+        raise PasswordInvalida(
+            f"la contraseña debe tener entre {MIN_PASSWORD} y {MAX_PASSWORD} caracteres"
+        )
+    return password
+
+
+def _guardar() -> None:
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+
+def create_user(name: str, email: str, password: str) -> User:
+    name, email = _validar_datos(name, email)
+    password = _validar_password(password)
+    user = User(name=name, email=email)
+    user.set_password(password)
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except IntegrityError as exc:
+        db.session.rollback()
+        # Se consulta recién acá (y no antes de insertar) para no depender de
+        # un chequeo previo que dos pedidos en paralelo podrían saltarse.
+        if User.query.filter_by(email=email).first() is not None:
+            raise EmailYaEnUso(f"El email {email} ya está en uso") from exc
+        raise
+    except Exception:
+        db.session.rollback()
+        raise
+    return user
+
 
 def modify_user(user_id: int, name: str, email: str) -> User:
     validate_id(user_id)
@@ -98,6 +128,7 @@ def modify_user(user_id: int, name: str, email: str) -> User:
     return user
 
 # borra el autor, el usuario, sus preguntas y respuestas en cascada
+
 def delete_user(user_id: int) -> None:
     validate_id(user_id)
     user = db.get_or_404(User, user_id)
@@ -108,21 +139,21 @@ def delete_user(user_id: int) -> None:
         db.session.rollback()
         raise
 
-# --- autenticación ---
 
-#comprobar que la contraseña es la correcta para un usuario
-def verificar_password(user: User, password: object) -> bool:
-    if not isinstance(password, str):
-        return False
-    return user.check_password(password)
-
+# --- Historia 1: autenticación ---
 
 def establecer_password(user: User, password: str) -> None:
     _validar_password(password)
     user.set_password(password)
     user.failed_attempts = 0
     user.locked_until = None
-    db.session.commit()
+    _guardar()
+
+#comprobar que la contraseña es la correcta para un usuario
+def verificar_password(user: User, password: object) -> bool:
+    if not isinstance(password, str):
+        return False
+    return user.check_password(password)
 
 
 def autenticar(email: str, password: str) -> User:
@@ -132,37 +163,39 @@ def autenticar(email: str, password: str) -> User:
     - Contraseña incorrecta -> CredencialesInvalidas (se notifica al usuario).
     - 3 fallos seguidos -> la cuenta se bloquea temporalmente (CuentaBloqueada).
     """
+    if type(email) is not str or type(password) is not str:
+        raise CredencialesInvalidas()
+    email = email.strip().lower()  # create_user guarda los emails en minúsculas
+
     max_intentos = current_app.config["MAX_LOGIN_ATTEMPTS"]
     minutos = current_app.config["LOCK_MINUTES"]
 
-    email = email if isinstance(email, str) else ""
-    password = password if isinstance(password, str) else ""
-
-    user = User.query.filter_by(email=email).first()
+    # with_for_update serializa los intentos sobre el mismo usuario: si no, dos
+    # pedidos en paralelo podrían saltarse el límite de intentos.
+    user = User.query.filter_by(email=email).with_for_update().first()
     if user is None:
         raise CredencialesInvalidas()
 
-    # Bloqueo vencido -> se limpia.
-    if user.locked_until is not None and not user.is_locked():
-        user.locked_until = None
+    if user.locked_until is not None:
+        if user.is_locked():
+            # Bloqueada: se rechaza incluso con la contraseña correcta.
+            raise CuentaBloqueada(user.locked_until)
+        user.locked_until = None  # el bloqueo ya venció
         user.failed_attempts = 0
-        db.session.commit()
-
-    # Bloqueada: se rechaza incluso con la contraseña correcta.
-    if user.is_locked():
-        raise CuentaBloqueada(user.locked_until)
 
     if user.check_password(password):
         user.failed_attempts = 0
-        db.session.commit()
+        _guardar()
         return user
 
     user.failed_attempts += 1
     if user.failed_attempts >= max_intentos:
-        user.locked_until = utcnow_naive() + timedelta(minutes=minutos)
+        hasta = utcnow_naive() + timedelta(minutes=minutos)
+        user.locked_until = hasta
         user.failed_attempts = 0
-        db.session.commit()
-        raise CuentaBloqueada(user.locked_until)
+        _guardar()
+        raise CuentaBloqueada(hasta)
 
-    db.session.commit()
-    raise CredencialesInvalidas(max_intentos - user.failed_attempts)
+    restantes = max_intentos - user.failed_attempts
+    _guardar()
+    raise CredencialesInvalidas(restantes)

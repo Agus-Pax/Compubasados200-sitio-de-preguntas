@@ -1,10 +1,11 @@
 from flask import current_app
 
+from sitio_de_preguntas.models import TipoRespuesta
 from sitio_de_preguntas.services.ia.strategy_ia import StrategyIA
 
 
 class ChatGPT(StrategyIA):
-    tipo = "CHAT_GPT"
+    tipo = TipoRespuesta.GPT
 
     def generar_texto(self, prompt: str) -> str:
         from openai import OpenAI  # pip install openai
