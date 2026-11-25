@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Mi perfil · Sitio de preguntas{% endblock %}
+
+{% block content %}
+  <main class="page">
+    <section class="profile" aria-labelledby="profile-title">
+      <header class="profile__header">
+        <span class="mark mark--small" aria-hidden="true">?</span>
+        <p class="eyebrow">Sitio de preguntas</p>
+        <h1 id="profile-title">Mi perfil</h1>
+        <p class="description">Datos de tu cuenta universitaria.</p>
+      </header>
+
+      <div class="profile__card">
+        <div class="profile__identity">
+          <span class="profile__avatar" aria-hidden="true">{{ usuario.name[:1]|upper }}</span>
+          <p class="profile__identity-text">
+            Sesión iniciada como <strong>{{ usuario.name }}</strong>
+          </p>
+        </div>
+
+        <dl class="profile__data">
+          <div class="profile__row">
+            <dt>Nombre</dt>
+            <dd>{{ usuario.name }}</dd>
+          </div>
+          <div class="profile__row">
+            <dt>Correo electrónico</dt>
+            <dd>{{ usuario.email }}</dd>
+          </div>
+          <div class="profile__row">
+            <dt>ID de usuario</dt>
+            <dd>{{ usuario.id }}</dd>
+          </div>
+        </dl>
+
+        <form method="post" action="{{ url_for('web.logout') }}">
+          <button class="button button--secondary" type="submit">Cerrar sesión</button>
+        </form>
+      </div>
+    </section>
+  </main>
+{% endblock %}
