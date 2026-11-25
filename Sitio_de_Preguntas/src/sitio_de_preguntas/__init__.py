@@ -1,6 +1,9 @@
 from flask import Flask
 
-from sitio_de_preguntas.cli import respuestas_automaticas_command
+from sitio_de_preguntas.cli import (
+    init_categorias_command,
+    respuestas_automaticas_command,
+)
 from sitio_de_preguntas.config import Config
 from sitio_de_preguntas.extensions import db
 
@@ -26,6 +29,7 @@ def create_app(config_class=Config):
     app.register_blueprint(home_bp)
 
     app.cli.add_command(respuestas_automaticas_command)
+    app.cli.add_command(init_categorias_command)
     
 
     return app
