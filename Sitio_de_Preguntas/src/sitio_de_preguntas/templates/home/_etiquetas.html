@@ -1,0 +1,7 @@
+{% if pregunta.etiquetas %}
+  <ul class="tag-badges" aria-label="Etiquetas de la pregunta">
+    {% for etiqueta in pregunta.etiquetas %}
+      <li class="tag-badge">{{ etiqueta.nombre }}</li>
+    {% endfor %}
+  </ul>
+{% endif %}

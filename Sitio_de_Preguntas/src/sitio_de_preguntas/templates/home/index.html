@@ -34,6 +34,7 @@
                     <span>{{ cantidad }} {{ 'respuesta' if cantidad == 1 else 'respuestas' }}</span>
                   </span>
                 </a>
+                {% include "home/_etiquetas.html" %}
                 {% if pregunta.respuesta_aceptada_id is not none %}
                   <p class="question-card__accepted"><span aria-hidden="true">✓</span> Respuesta aceptada</p>
                 {% endif %}
