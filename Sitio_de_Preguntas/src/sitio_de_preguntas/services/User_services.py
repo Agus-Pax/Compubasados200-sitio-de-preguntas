@@ -2,30 +2,18 @@ from datetime import UTC, datetime, timedelta
 
 from flask import current_app
 from sqlalchemy.exc import IntegrityError
-<<<<<<< HEAD
-from werkzeug.security import check_password_hash, generate_password_hash
 
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import Autor, Pregunta, Respuesta, User, Voto
+from sitio_de_preguntas.models import User
+from sitio_de_preguntas.utils import utcnow_naive
 from sitio_de_preguntas.services.validaciones import validate_id
 
 MAX_NOMBRE = 120
 MAX_EMAIL = 255
 MIN_PASSWORD = 8
 MAX_PASSWORD = 128
-=======
-
-from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import User
-from sitio_de_preguntas.services.validaciones import validate_id
-from sitio_de_preguntas.utils import utcnow_naive
->>>>>>> main
-
-MAX_NOMBRE = 120
-MAX_EMAIL = 255
 
 class UsuarioInvalido(ValueError):
-<<<<<<< HEAD
     pass
 
 
@@ -34,12 +22,6 @@ class PasswordInvalida(UsuarioInvalido):
 
 
 class EmailYaEnUso(ValueError):
-    pass
-
-
-class UsuarioConContenido(Exception):
-=======
->>>>>>> main
     pass
 
 
@@ -55,7 +37,6 @@ class CuentaBloqueada(Exception):
         super().__init__("Cuenta bloqueada temporalmente")
 
 
-<<<<<<< HEAD
 def _validar_email(email: str) -> None:
     local, sep, dominio = email.partition("@")
     if (
@@ -84,30 +65,40 @@ def _validar_datos(name, email):
     _validar_email(email)
     return name, email
 
-
-def _hashear_password(password) -> str:
+#confirmar si la contraseña cumple con las restrcciones
+def _validar_password(password: str) -> str:
+    """Confirma que la contraseña cumple las restricciones (no la hashea)."""
     if type(password) is not str:
         raise PasswordInvalida("la contraseña debe ser texto")
+    if not password.strip():
+        raise PasswordInvalida("la contraseña no puede estar vacía")
     if not MIN_PASSWORD <= len(password) <= MAX_PASSWORD:
         raise PasswordInvalida(
             f"la contraseña debe tener entre {MIN_PASSWORD} y {MAX_PASSWORD} caracteres"
         )
-    return generate_password_hash(password)
+    return password
 
 
-def create_user(name: str, email: str, password: str | None = None) -> User:
-    """``password`` es opcional para no romper los llamados existentes, pero
-    un usuario sin contraseña no puede iniciar sesión."""
-    name, email = _validar_datos(name, email)
-    password_hash = _hashear_password(password) if password is not None else None
+def _guardar() -> None:
     try:
-        user = User(name=name, email=email, password_hash=password_hash)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+
+
+def create_user(name: str, email: str, password: str) -> User:
+    name, email = _validar_datos(name, email)
+    password = _validar_password(password)
+    user = User(name=name, email=email)
+    user.set_password(password)
+    try:
         db.session.add(user)
-        db.session.flush()  # asigna user.id
-        db.session.add(Autor(usuario_id=user.id))
         db.session.commit()
     except IntegrityError as exc:
         db.session.rollback()
+        # Se consulta recién acá (y no antes de insertar) para no depender de
+        # un chequeo previo que dos pedidos en paralelo podrían saltarse.
         if User.query.filter_by(email=email).first() is not None:
             raise EmailYaEnUso(f"El email {email} ya está en uso") from exc
         raise
@@ -117,59 +108,6 @@ def create_user(name: str, email: str, password: str | None = None) -> User:
     return user
 
 
-=======
-class EmailYaEnUso(ValueError):
-    pass
-
-#confirmar si la contraseña cumple con las restrcciones
-def _validar_password(password: str) -> str:
-    if not isinstance(password, str) or not password.strip():
-        raise UsuarioInvalido("la contraseña no puede estar vacía")
-    return password
-
-
-def create_user(name: str, email: str, password: str) -> User:
-    name, email = _validar_datos(name, email)
-    password = _validar_password(password)
-    if User.query.filter_by(email=email).first():
-        raise EmailYaEnUso
-    user = User(name=name, email=email)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-    return user
-
-
-def _validar_email(email: str) -> None:
-    local, sep, dominio = email.partition("@")
-    if (
-        not sep
-        or not local
-        or "@" in dominio
-        or " " in email
-        or "." not in dominio
-        or dominio.startswith(".")
-        or dominio.endswith(".")
-    ):
-        raise UsuarioInvalido("el email no tiene un formato válido")
-
-
-def _validar_datos(name, email):
-    if type(name) is not str or type(email) is not str:
-        raise UsuarioInvalido("nombre y email deben ser texto")
-    name = name.strip()
-    email = email.strip().lower()
-    if not name or not email:
-        raise UsuarioInvalido("nombre y email no pueden estar vacíos")
-    if len(name) > MAX_NOMBRE:
-        raise UsuarioInvalido(f"el nombre supera {MAX_NOMBRE} caracteres")
-    if len(email) > MAX_EMAIL:
-        raise UsuarioInvalido(f"el email supera {MAX_EMAIL} caracteres")
-    _validar_email(email)
-    return name, email
-
-
->>>>>>> main
 def modify_user(user_id: int, name: str, email: str) -> User:
     validate_id(user_id)
     name, email = _validar_datos(name, email)
@@ -188,44 +126,13 @@ def modify_user(user_id: int, name: str, email: str) -> User:
         db.session.rollback()
         raise
     return user
-<<<<<<< HEAD
-=======
 
 # borra el autor, el usuario, sus preguntas y respuestas en cascada
+
 def delete_user(user_id: int) -> None:
     validate_id(user_id)
     user = db.get_or_404(User, user_id)
     try:
-        db.session.delete(user)
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        raise
->>>>>>> main
-
-
-<<<<<<< HEAD
-def delete_user(user_id: int) -> None:
-    validate_id(user_id)
-    user = db.get_or_404(User, user_id)
-    autor = Autor.query.filter_by(usuario_id=user.id).first()
-
-    if autor is not None:
-        tiene_contenido = (
-            Pregunta.query.filter_by(autor_id=autor.id).first() is not None
-            or Respuesta.query.filter_by(autor_id=autor.id).first() is not None
-        )
-        if tiene_contenido:
-            raise UsuarioConContenido(
-                f"El usuario {user_id} tiene preguntas o respuestas"
-            )
-    if Voto.query.filter_by(usuario_id=user.id).first() is not None:
-        raise UsuarioConContenido(f"El usuario {user_id} tiene votos registrados")
-
-    try:
-        if autor is not None:
-            db.session.delete(autor)
-            db.session.flush()
         db.session.delete(user)
         db.session.commit()
     except Exception:
@@ -235,35 +142,18 @@ def delete_user(user_id: int) -> None:
 
 # --- Historia 1: autenticación ---
 
-def _guardar() -> None:
-    try:
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
-        raise
+def establecer_password(user: User, password: str) -> None:
+    _validar_password(password)
+    user.set_password(password)
+    user.failed_attempts = 0
+    user.locked_until = None
+    _guardar()
 
-
-def establecer_password(user_id: int, password: str) -> None:
-    """Para darle contraseña a un usuario existente o cambiársela."""
-    validate_id(user_id)
-    password_hash = _hashear_password(password)
-    user = db.get_or_404(User, user_id)
-    user.password_hash = password_hash
-=======
 #comprobar que la contraseña es la correcta para un usuario
 def verificar_password(user: User, password: object) -> bool:
     if not isinstance(password, str):
         return False
     return user.check_password(password)
-
-
-def establecer_password(user: User, password: str) -> None:
-    _validar_password(password)
-    user.set_password(password)
->>>>>>> main
-    user.failed_attempts = 0
-    user.locked_until = None
-    _guardar()
 
 
 def autenticar(email: str, password: str) -> User:
@@ -280,35 +170,27 @@ def autenticar(email: str, password: str) -> User:
     max_intentos = current_app.config["MAX_LOGIN_ATTEMPTS"]
     minutos = current_app.config["LOCK_MINUTES"]
 
-<<<<<<< HEAD
     # with_for_update serializa los intentos sobre el mismo usuario: si no, dos
     # pedidos en paralelo podrían saltarse el límite de intentos.
     user = User.query.filter_by(email=email).with_for_update().first()
-=======
-    email = email if isinstance(email, str) else ""
-    password = password if isinstance(password, str) else ""
-
-    user = User.query.filter_by(email=email).first()
->>>>>>> main
     if user is None:
         raise CredencialesInvalidas()
 
-    ahora = datetime.now(UTC).replace(tzinfo=None)
     if user.locked_until is not None:
-        if user.locked_until > ahora:
+        if user.is_locked():
             # Bloqueada: se rechaza incluso con la contraseña correcta.
             raise CuentaBloqueada(user.locked_until)
         user.locked_until = None  # el bloqueo ya venció
         user.failed_attempts = 0
 
-    if user.password_hash and check_password_hash(user.password_hash, password):
+    if user.check_password(password):
         user.failed_attempts = 0
         _guardar()
         return user
 
     user.failed_attempts += 1
     if user.failed_attempts >= max_intentos:
-        hasta = ahora + timedelta(minutes=minutos)
+        hasta = utcnow_naive() + timedelta(minutes=minutos)
         user.locked_until = hasta
         user.failed_attempts = 0
         _guardar()

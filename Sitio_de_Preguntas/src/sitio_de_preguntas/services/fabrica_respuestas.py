@@ -1,13 +1,8 @@
-
-from sitio_de_preguntas.models import Pregunta, Respuesta, TipoRespuesta
 from abc import ABC, abstractmethod
 
 from sitio_de_preguntas.extensions import db
-<<<<<<< HEAD
-from sitio_de_preguntas.models import Pregunta, Respuesta, TipoRespuesta
+from sitio_de_preguntas.models import Autor, Pregunta, Respuesta, TipoRespuesta
 
-=======
->>>>>>> main
 
 class TipoDeRespuestaNoSoportado(ValueError):
     pass
@@ -15,18 +10,21 @@ class TipoDeRespuestaNoSoportado(ValueError):
 
 class FabricaAbsRespuestas(ABC):
     @abstractmethod
-    def crear_respuesta(self, pregunta, autor, contenido, tipo: TipoRespuesta):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str, tipo: TipoRespuesta
+    ) -> Respuesta:
         """Crea y persiste una respuesta asociada a una pregunta."""
 
 
 class StrategyRespuesta(ABC):
     @abstractmethod
-    def crear_respuesta(self, pregunta, autor, contenido):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str
+    ) -> Respuesta:
         """Construye la respuesta concreta según la estrategia."""
 
 
 class StrategyUsuario(StrategyRespuesta):
-    def crear_respuesta(self, pregunta, autor, contenido):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str
+    ) -> Respuesta:
         return Respuesta(contenido=contenido, pregunta=pregunta, autor=autor)
 
 
@@ -40,11 +38,10 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
     configuración LLM_PROVIDER): cambiar de LLM no requiere tocar código.
     """
 
-    def __init__(self, estrategias=None):
+    def __init__(self, estrategias: dict | None = None):
         self._estrategias = (
             estrategias
             if estrategias is not None
-<<<<<<< HEAD
             else self._estrategias_por_defecto()
         )
 
@@ -56,26 +53,14 @@ class FabricaConcretaRespuestas(FabricaAbsRespuestas):
 
         return {TipoRespuesta.USUARIO: StrategyUsuario(), **estrategias_ia()}
 
-    def crear_respuesta(self, pregunta: Pregunta, autor, contenido: str, tipo: TipoRespuesta):
+    def crear_respuesta(self, pregunta: Pregunta, autor: Autor, contenido: str, tipo: TipoRespuesta
+    ) -> Respuesta:
         """Crea la respuesta y la deja en la sesión (flush). El commit lo hace
         quien llama."""
-=======
-            else {TipoRespuesta.USUARIO : StrategyUsuario()}
-            #completar con soporte para llm
-        )
-
-    def crear_respuesta(self, pregunta:Pregunta, autor, contenido:str, tipo:TipoRespuesta):
->>>>>>> main
         estrategia = self._estrategias.get(tipo)
         if estrategia is None:
-            raise TipoDeRespuestaNoSoportado(
-                f"Tipo de respuesta no soportado: {tipo}"
-            )
+            raise TipoDeRespuestaNoSoportado(f"Tipo de respuesta no soportado: {tipo}")
         respuesta = estrategia.crear_respuesta(pregunta, autor, contenido)
         db.session.add(respuesta)
         db.session.flush()
-<<<<<<< HEAD
         return respuesta
-=======
-        return respuesta
->>>>>>> main
