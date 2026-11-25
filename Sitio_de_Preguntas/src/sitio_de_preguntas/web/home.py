@@ -3,12 +3,17 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import User
 from sitio_de_preguntas.services.categoria_services import listar_categorias
-from sitio_de_preguntas.services.etiqueta_services import listar_etiquetas
+from sitio_de_preguntas.services.etiqueta_services import (
+    EtiquetaNoEncontrada,
+    EtiquetasInvalidas,
+    listar_etiquetas,
+)
 from sitio_de_preguntas.services.pregunta_services import (
     AutorNoPuedePreguntar,
     NoEsAutorDeLaPregunta,
     crear_pregunta,
     listar_preguntas,
+    modificar_pregunta,
     obtener_pregunta,
 )
 from sitio_de_preguntas.services.respuesta_services import (
@@ -70,6 +75,48 @@ def _id_formulario(valor) -> int | None:
         return int(valor)
     except (TypeError, ValueError):
         return None
+
+
+def _ids_etiquetas_formulario() -> list[int]:
+    ids = (
+        _id_formulario(valor)
+        for valor in request.form.getlist("etiquetas_ids")
+    )
+    return [id_ for id_ in ids if id_ is not None]
+
+
+def _valores_pregunta(pregunta=None) -> dict:
+    """Valores iniciales del formulario, ya sea para crear o para editar."""
+    if pregunta is None:
+        return {
+            "titulo": "",
+            "contenido": "",
+            "categoria_id": "",
+            "etiquetas_ids": [],
+        }
+    return {
+        "titulo": pregunta.titulo,
+        "contenido": pregunta.contenido,
+        "categoria_id": str(pregunta.categoria_id),
+        "etiquetas_ids": [str(etiqueta.id) for etiqueta in pregunta.etiquetas],
+    }
+
+
+def _errores_pregunta() -> dict:
+    return {"titulo": None, "contenido": None, "categoria": None, "general": None}
+
+
+def _render_formulario_pregunta(usuario, valores, errores, pregunta=None):
+    return render_template(
+        "home/nueva.html",
+        usuario=usuario,
+        categorias=listar_categorias(),
+        etiquetas=listar_etiquetas(),
+        valores=valores,
+        errores=errores,
+        pregunta=pregunta,
+        es_edicion=pregunta is not None,
+    )
 
 
 def _votos_usuario(usuario):
@@ -263,28 +310,17 @@ def crear():
     if respuesta is not None:
         return respuesta
 
-    categorias = listar_categorias()
-    etiquetas = listar_etiquetas()
-    valores = {
-        "titulo": "",
-        "contenido": "",
-        "categoria_id": "",
-        "etiquetas_ids": [],
-    }
-    errores = {"titulo": None, "contenido": None, "categoria": None, "general": None}
+    valores = _valores_pregunta()
+    errores = _errores_pregunta()
 
     if request.method == "POST":
         valores["titulo"] = request.form.get("titulo", "").strip()
         valores["contenido"] = request.form.get("contenido", "").strip()
         valores["categoria_id"] = request.form.get("categoria_id", "")
+        etiquetas_ids = _ids_etiquetas_formulario()
+        valores["etiquetas_ids"] = [str(id_) for id_ in etiquetas_ids]
 
         categoria_id = _id_formulario(valores["categoria_id"])
-        etiquetas_ids = [
-            id_
-            for id_ in (_id_formulario(v) for v in request.form.getlist("etiquetas_ids"))
-            if id_ is not None
-        ]
-        valores["etiquetas_ids"] = [str(id_) for id_ in etiquetas_ids]
 
         if not valores["titulo"]:
             errores["titulo"] = "Ingresá un título para la pregunta."
@@ -304,17 +340,69 @@ def crear():
                 )
             except AutorNoPuedePreguntar:
                 errores["general"] = "Tu cuenta no puede crear preguntas."
+            except EtiquetasInvalidas as exc:
+                errores["general"] = f"Etiquetas inválidas: {exc}"
+            except EtiquetaNoEncontrada as exc:
+                errores["general"] = f"No pudimos guardar las etiquetas: {exc}"
             except ValueError as exc:
                 errores["general"] = f"No pudimos crear la pregunta: {exc}"
             else:
                 flash("Pregunta publicada correctamente.", "success")
                 return redirect(url_for("home.detalle", pregunta_id=pregunta.id))
 
-    return render_template(
-        "home/nueva.html",
-        usuario=usuario,
-        categorias=categorias,
-        etiquetas=etiquetas,
-        valores=valores,
-        errores=errores,
-    )
+    return _render_formulario_pregunta(usuario, valores, errores)
+
+
+@home_bp.route("/preguntas/<int:pregunta_id>/editar", methods=["GET", "POST"])
+def editar(pregunta_id: int):
+    usuario, respuesta = _usuario_o_redirect()
+    if respuesta is not None:
+        return respuesta
+
+    pregunta = obtener_pregunta(pregunta_id)
+    if pregunta.autor_id != usuario.id:
+        flash("Sólo el autor de la pregunta puede editarla.", "info")
+        return redirect(url_for("home.detalle", pregunta_id=pregunta_id))
+
+    valores = _valores_pregunta(pregunta)
+    errores = _errores_pregunta()
+
+    if request.method == "POST":
+        valores["titulo"] = request.form.get("titulo", "").strip()
+        valores["contenido"] = request.form.get("contenido", "").strip()
+        valores["categoria_id"] = request.form.get("categoria_id", "")
+        etiquetas_ids = _ids_etiquetas_formulario()
+        valores["etiquetas_ids"] = [str(id_) for id_ in etiquetas_ids]
+
+        categoria_id = _id_formulario(valores["categoria_id"])
+
+        if not valores["titulo"]:
+            errores["titulo"] = "Ingresá un título para la pregunta."
+        if not valores["contenido"]:
+            errores["contenido"] = "Contá cuál es tu duda."
+        if categoria_id is None:
+            errores["categoria"] = "Elegí una categoría."
+
+        if not any(errores.values()):
+            try:
+                modificar_pregunta(
+                    pregunta_id=pregunta_id,
+                    usuario_id=usuario.id,
+                    titulo=valores["titulo"],
+                    contenido=valores["contenido"],
+                    categoria_id=categoria_id,
+                    etiquetas_ids=etiquetas_ids,
+                )
+            except (AutorNoPuedePreguntar, NoEsAutorDeLaPregunta):
+                errores["general"] = "No tenés permiso para editar esta pregunta."
+            except EtiquetasInvalidas as exc:
+                errores["general"] = f"Etiquetas inválidas: {exc}"
+            except EtiquetaNoEncontrada as exc:
+                errores["general"] = f"No pudimos guardar las etiquetas: {exc}"
+            except ValueError as exc:
+                errores["general"] = f"No pudimos guardar la pregunta: {exc}"
+            else:
+                flash("Pregunta actualizada correctamente.", "success")
+                return redirect(url_for("home.detalle", pregunta_id=pregunta_id))
+
+    return _render_formulario_pregunta(usuario, valores, errores, pregunta=pregunta)

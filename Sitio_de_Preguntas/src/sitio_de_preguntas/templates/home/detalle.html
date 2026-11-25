@@ -15,6 +15,7 @@
         <span aria-hidden="true">·</span>
         <time datetime="{{ pregunta.fecha_publicacion.isoformat() if pregunta.fecha_publicacion else '' }}">{{ fecha_pregunta }}</time>
       </p>
+      {% include "home/_etiquetas.html" %}
       <p class="detail-card__content">{{ pregunta.contenido }}</p>
       {{ votos(
           url_for('home.votar_pregunta', pregunta_id=pregunta.id),
@@ -22,6 +23,9 @@
           pregunta.votos_negativos,
           votos_preguntas.get(pregunta.id)
         ) }}
+      {% if es_autor %}
+        <p><a class="button button--secondary" href="{{ url_for('home.editar', pregunta_id=pregunta.id) }}">Editar pregunta</a></p>
+      {% endif %}
     </article>
 
     <section aria-labelledby="respuestas-title">

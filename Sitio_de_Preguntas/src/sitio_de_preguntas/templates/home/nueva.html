@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Nueva pregunta · Sitio de preguntas{% endblock %}
+{% block title %}{{ 'Editar pregunta' if es_edicion else 'Nueva pregunta' }} · Sitio de preguntas{% endblock %}
 
 {% block content %}
   <main class="home">
@@ -8,8 +8,10 @@
 
     <section class="form-card" aria-labelledby="nueva-title">
       <p class="eyebrow eyebrow--accent">Comunidad</p>
-      <h2 id="nueva-title">Nueva pregunta</h2>
-      <p class="description">Contá tu duda con claridad para que otros puedan ayudarte.</p>
+      <h2 id="nueva-title">{{ 'Editar pregunta' if es_edicion else 'Nueva pregunta' }}</h2>
+      <p class="description">
+        {{ 'Actualizá tu duda y sus etiquetas.' if es_edicion else 'Contá tu duda con claridad para que otros puedan ayudarte.' }}
+      </p>
 
       {% if not categorias %}
         <p class="form-card__notice">
@@ -21,7 +23,12 @@
         <div class="auth-card__errors" role="alert">{{ errores.general }}</div>
       {% endif %}
 
-      <form class="question-form" method="post" action="{{ url_for('home.crear') }}" novalidate>
+      <form
+        class="question-form"
+        method="post"
+        action="{{ url_for('home.editar', pregunta_id=pregunta.id) if es_edicion else url_for('home.crear') }}"
+        novalidate
+      >
         <div class="field">
           <label class="field__label" for="titulo">Título</label>
           <input
@@ -83,8 +90,13 @@
         {% endif %}
 
         <div class="question-form__actions">
-          <button class="button button--primary" type="submit">Publicar pregunta</button>
-          <a class="button button--secondary" href="{{ url_for('home.inicio') }}">Cancelar</a>
+          <button class="button button--primary" type="submit">
+            {{ 'Guardar cambios' if es_edicion else 'Publicar pregunta' }}
+          </button>
+          <a
+            class="button button--secondary"
+            href="{{ url_for('home.detalle', pregunta_id=pregunta.id) if es_edicion else url_for('home.inicio') }}"
+          >Cancelar</a>
         </div>
       </form>
     </section>
