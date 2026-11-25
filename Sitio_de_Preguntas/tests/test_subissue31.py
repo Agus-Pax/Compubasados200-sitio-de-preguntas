@@ -154,6 +154,11 @@ def test_eliminar_cuenta_requiere_confirmacion_y_cierra_sesion(app):
     voto = Voto(pregunta=pregunta, autor=otro, valor=1)
     db.session.add_all([pregunta, respuesta, voto])
     db.session.commit()
+    # La respuesta aceptada crea un ciclo Pregunta <-> Respuesta que debe
+    # resolverse al borrar la cuenta (regresión del issue #31).
+    pregunta.respuesta_aceptada = respuesta
+    db.session.commit()
+    assert pregunta.respuesta_aceptada_id == respuesta.id
 
     ids = {
         "usuario": usuario.id,

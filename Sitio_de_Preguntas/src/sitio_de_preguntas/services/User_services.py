@@ -4,7 +4,7 @@ from flask import current_app
 from sqlalchemy.exc import IntegrityError
 
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import User
+from sitio_de_preguntas.models import Pregunta, User
 from sitio_de_preguntas.utils import utcnow_naive
 from sitio_de_preguntas.services.validaciones import validate_id
 
@@ -133,6 +133,16 @@ def delete_user(user_id: int) -> None:
     validate_id(user_id)
     user = db.get_or_404(User, user_id)
     try:
+        # Pregunta y Respuesta se referencian entre sí cuando hay respuesta
+        # aceptada. Si no se corta ese vínculo antes, SQLAlchemy no puede
+        # ordenar el flush y falla con CircularDependencyError.
+        db.session.query(Pregunta).filter(
+            Pregunta.autor_id == user_id
+        ).update(
+            {Pregunta.respuesta_aceptada_id: None},
+            synchronize_session=False,
+        )
+        db.session.flush()
         db.session.delete(user)
         db.session.commit()
     except Exception:
