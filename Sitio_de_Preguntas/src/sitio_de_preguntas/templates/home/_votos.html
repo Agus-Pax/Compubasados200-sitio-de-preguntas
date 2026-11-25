@@ -1,0 +1,37 @@
+{% macro votos(url, positivos, negativos, voto_usuario, origen='detalle') %}
+  <div class="votes" role="group" aria-label="Votos">
+    <form class="votes__form" method="post" action="{{ url }}">
+      <input type="hidden" name="valor" value="1">
+      <input type="hidden" name="origen" value="{{ origen }}">
+      <button
+        class="votes__button{% if voto_usuario == 1 %} is-active{% endif %}"
+        type="submit"
+        aria-label="Votar a favor"
+        aria-pressed="{{ 'true' if voto_usuario == 1 else 'false' }}"
+      >▲</button>
+    </form>
+
+    <span class="votes__count" aria-label="Votos a favor: {{ positivos }}">{{ positivos }}</span>
+    <span class="votes__separator" aria-hidden="true">·</span>
+    <span class="votes__count" aria-label="Votos en contra: {{ negativos }}">{{ negativos }}</span>
+
+    <form class="votes__form" method="post" action="{{ url }}">
+      <input type="hidden" name="valor" value="-1">
+      <input type="hidden" name="origen" value="{{ origen }}">
+      <button
+        class="votes__button{% if voto_usuario == -1 %} is-active{% endif %}"
+        type="submit"
+        aria-label="Votar en contra"
+        aria-pressed="{{ 'true' if voto_usuario == -1 else 'false' }}"
+      >▼</button>
+    </form>
+
+    {% if voto_usuario %}
+      <form class="votes__form" method="post" action="{{ url }}">
+        <input type="hidden" name="valor" value="0">
+        <input type="hidden" name="origen" value="{{ origen }}">
+        <button class="votes__remove" type="submit">Quitar voto</button>
+      </form>
+    {% endif %}
+  </div>
+{% endmacro %}

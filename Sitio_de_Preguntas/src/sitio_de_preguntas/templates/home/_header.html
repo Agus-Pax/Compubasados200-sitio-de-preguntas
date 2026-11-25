@@ -1,0 +1,19 @@
+<header class="home__header">
+  <div class="home__brand">
+    <span class="mark mark--small" aria-hidden="true">?</span>
+    <div>
+      <p class="eyebrow">Sitio de preguntas</p>
+      <h1 class="home__brand-title">
+        <a class="home__brand-link" href="{{ url_for('home.inicio') }}">Comunidad</a>
+      </h1>
+    </div>
+  </div>
+
+  <div class="home__actions">
+    <a class="button button--primary" href="{{ url_for('home.crear') }}">Nueva pregunta</a>
+    <a class="button button--secondary" href="{{ url_for('web.perfil') }}">Mi perfil</a>
+    <form method="post" action="{{ url_for('web.logout') }}">
+      <button class="button button--secondary" type="submit">Cerrar sesión</button>
+    </form>
+  </div>
+</header>

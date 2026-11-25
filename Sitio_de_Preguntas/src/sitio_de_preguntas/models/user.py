@@ -24,9 +24,7 @@ class User(Autor):
 
     __mapper_args__: ClassVar[dict] = {"polymorphic_identity": "usuario"}
 
-    votos = db.relationship(
-        "Voto", back_populates="usuario", cascade="all, delete-orphan"
-    )
+    # Los votos viven en Autor (heredado), así también puede votar un agente IA.
 
     # --- autenticación -----------------------------------------------------
     # La lógica de login está en services/User_services.py; acá solo está lo

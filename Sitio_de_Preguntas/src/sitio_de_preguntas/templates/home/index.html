@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% from "home/_votos.html" import votos with context %}
+
+{% block title %}Inicio · Sitio de preguntas{% endblock %}
+
+{% block content %}
+  <main class="home">
+    {% include "home/_header.html" %}
+
+    <section class="home__intro" aria-labelledby="home-title">
+      <p class="eyebrow eyebrow--accent">Hola, {{ usuario.name }}</p>
+      <h2 id="home-title">¿Qué querés saber hoy?</h2>
+      <p class="description">Recorré las preguntas de la comunidad o publicá una nueva.</p>
+    </section>
+
+    <section aria-labelledby="preguntas-title">
+      <h3 class="home__section-title" id="preguntas-title">Últimas preguntas</h3>
+
+      {% if preguntas %}
+        <ul class="question-list">
+          {% for pregunta in preguntas %}
+            <li>
+              <article class="question-card">
+                {% set cantidad = pregunta.cantidad_respuestas|default(0) %}
+                <a class="question-card__link" href="{{ url_for('home.detalle', pregunta_id=pregunta.id) }}">
+                  <span class="question-card__title">{{ pregunta.titulo }}</span>
+                  <span class="question-card__meta">
+                    <span>{{ nombre_autor(pregunta.autor) }}</span>
+                    <span aria-hidden="true">·</span>
+                    <time datetime="{{ pregunta.fecha_publicacion.isoformat() if pregunta.fecha_publicacion else '' }}">
+                      {{ fecha(pregunta.fecha_publicacion) }}
+                    </time>
+                    <span aria-hidden="true">·</span>
+                    <span>{{ cantidad }} {{ 'respuesta' if cantidad == 1 else 'respuestas' }}</span>
+                  </span>
+                </a>
+                {% if pregunta.respuesta_aceptada_id is not none %}
+                  <p class="question-card__accepted"><span aria-hidden="true">✓</span> Respuesta aceptada</p>
+                {% endif %}
+                {{ votos(
+                    url_for('home.votar_pregunta', pregunta_id=pregunta.id),
+                    pregunta.votos_positivos,
+                    pregunta.votos_negativos,
+                    votos_preguntas.get(pregunta.id),
+                    'home'
+                  ) }}
+              </article>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">Todavía no hay preguntas. ¡Publicá la primera!</p>
+      {% endif %}
+    </section>
+  </main>
+{% endblock %}

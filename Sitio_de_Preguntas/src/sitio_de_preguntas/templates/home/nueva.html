@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva pregunta · Sitio de preguntas{% endblock %}
+
+{% block content %}
+  <main class="home">
+    {% include "home/_header.html" %}
+
+    <section class="form-card" aria-labelledby="nueva-title">
+      <p class="eyebrow eyebrow--accent">Comunidad</p>
+      <h2 id="nueva-title">Nueva pregunta</h2>
+      <p class="description">Contá tu duda con claridad para que otros puedan ayudarte.</p>
+
+      {% if not categorias %}
+        <p class="form-card__notice">
+          Todavía no hay categorías disponibles. No se puede publicar una pregunta hasta que exista al menos una.
+        </p>
+      {% endif %}
+
+      {% if errores.general %}
+        <div class="auth-card__errors" role="alert">{{ errores.general }}</div>
+      {% endif %}
+
+      <form class="question-form" method="post" action="{{ url_for('home.crear') }}" novalidate>
+        <div class="field">
+          <label class="field__label" for="titulo">Título</label>
+          <input
+            class="field__input"
+            id="titulo"
+            name="titulo"
+            type="text"
+            maxlength="200"
+            placeholder="¿Cómo ordeno una lista en Python?"
+            value="{{ valores.titulo }}"
+            required
+          >
+          {% if errores.titulo %}<p class="field__error">{{ errores.titulo }}</p>{% endif %}
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="contenido">Contenido</label>
+          <textarea
+            class="field__input field__input--textarea"
+            id="contenido"
+            name="contenido"
+            rows="6"
+            placeholder="Explicá qué necesitás resolver y qué intentaste."
+            required
+          >{{ valores.contenido }}</textarea>
+          {% if errores.contenido %}<p class="field__error">{{ errores.contenido }}</p>{% endif %}
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="categoria_id">Categoría</label>
+          <select class="field__input" id="categoria_id" name="categoria_id" required>
+            <option value="">Elegí una categoría</option>
+            {% for categoria in categorias %}
+              <option value="{{ categoria.id }}" {% if valores.categoria_id == categoria.id|string %}selected{% endif %}>
+                {{ categoria.nombre }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if errores.categoria %}<p class="field__error">{{ errores.categoria }}</p>{% endif %}
+        </div>
+
+        {% if etiquetas %}
+          <fieldset class="tag-field">
+            <legend class="field__label">Etiquetas (opcional)</legend>
+            <div class="tag-list">
+              {% for etiqueta in etiquetas %}
+                <label class="tag">
+                  <input
+                    type="checkbox"
+                    name="etiquetas_ids"
+                    value="{{ etiqueta.id }}"
+                    {% if etiqueta.id|string in valores.etiquetas_ids %}checked{% endif %}
+                  >
+                  <span>{{ etiqueta.nombre }}</span>
+                </label>
+              {% endfor %}
+            </div>
+          </fieldset>
+        {% endif %}
+
+        <div class="question-form__actions">
+          <button class="button button--primary" type="submit">Publicar pregunta</button>
+          <a class="button button--secondary" href="{{ url_for('home.inicio') }}">Cancelar</a>
+        </div>
+      </form>
+    </section>
+  </main>
+{% endblock %}
