@@ -4,11 +4,23 @@ from sqlalchemy.exc import IntegrityError
 from sitio_de_preguntas.extensions import db
 from sitio_de_preguntas.models import Categoria
 from sitio_de_preguntas.services.validaciones import (
-    ValidacionError, validar_descripcion, validar_nombre, validate_id,
+    ValidacionError,
+    validar_descripcion,
+    validar_nombre,
+    validate_id,
 )
 
 MAX_NOMBRE_CATEGORIA = 120
 MAX_DESCRIPCION_CATEGORIA = 255
+
+CATEGORIAS_INICIALES = (
+    "Base de Datos",
+    "Python",
+    "Java",
+    "General",
+    "Flask",
+    "HTML",
+)
 
 
 class NombreDeCategoriaYaEnUso(ValidacionError):
@@ -36,6 +48,18 @@ def crear_categoria(nombre: str, descripcion: str | None = None) -> Categoria:
         db.session.rollback()
         raise
     return categoria
+
+
+def cargar_categorias_iniciales() -> list[str]:
+    """Crea las categorías iniciales que falten y devuelve las creadas."""
+    creadas = []
+    for nombre in CATEGORIAS_INICIALES:
+        try:
+            crear_categoria(nombre)
+        except NombreDeCategoriaYaEnUso:
+            continue
+        creadas.append(nombre)
+    return creadas
 
 
 def listar_categorias():

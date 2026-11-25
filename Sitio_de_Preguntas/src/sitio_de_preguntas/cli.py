@@ -2,21 +2,12 @@ import click
 from flask.cli import with_appcontext
 
 from sitio_de_preguntas.services.categoria_services import (
-    NombreDeCategoriaYaEnUso,
-    crear_categoria,
+    CATEGORIAS_INICIALES,
+    cargar_categorias_iniciales,
 )
 from sitio_de_preguntas.services.fabrica_respuestas import TipoDeRespuestaNoSoportado
 from sitio_de_preguntas.services.respuestas_automaticas import (
     generar_respuestas_pendientes,
-)
-
-CATEGORIAS_INICIALES = (
-    "Base de Datos",
-    "Python",
-    "Java",
-    "General",
-    "Flask",
-    "HTML",
 )
 
 
@@ -36,10 +27,7 @@ def respuestas_automaticas_command(llm):
 @with_appcontext
 def init_categorias_command():
     """Carga las categorías iniciales sin duplicar las que ya existen."""
+    creadas = cargar_categorias_iniciales()
     for nombre in CATEGORIAS_INICIALES:
-        try:
-            crear_categoria(nombre)
-        except NombreDeCategoriaYaEnUso:
-            click.echo(f"Ya existía: {nombre}")
-        else:
-            click.echo(f"Creada: {nombre}")
+        estado = "Creada" if nombre in creadas else "Ya existía"
+        click.echo(f"{estado}: {nombre}")
