@@ -24,15 +24,29 @@ class Respuesta(db.Model):
     autor_id = db.Column(
         db.Integer, db.ForeignKey("autores.id", ondelete="CASCADE"), nullable=False
     )
-    #atributo calculado para garantizar consistencia
+    # Atributo calculado para garantizar consistencia (neto = favor - contra).
     votos = column_property(
         select(func.coalesce(func.sum(Voto.valor), 0))
         .where(Voto.respuesta_id == id)
         .correlate_except(Voto)
         .scalar_subquery()
     )
+    votos_positivos = column_property(
+        select(func.count(Voto.id))
+        .where(Voto.respuesta_id == id, Voto.valor == 1)
+        .correlate_except(Voto)
+        .scalar_subquery()
+    )
+    votos_negativos = column_property(
+        select(func.count(Voto.id))
+        .where(Voto.respuesta_id == id, Voto.valor == -1)
+        .correlate_except(Voto)
+        .scalar_subquery()
+    )
 
-    pregunta = db.relationship("Pregunta", back_populates="respuestas")
+    pregunta = db.relationship(
+        "Pregunta", back_populates="respuestas", foreign_keys=[pregunta_id]
+    )
     autor = db.relationship("Autor", back_populates="respuestas")
     votos_usuarios = db.relationship(
         "Voto", back_populates="respuesta", cascade="all, delete-orphan"

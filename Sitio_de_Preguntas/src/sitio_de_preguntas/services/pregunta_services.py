@@ -1,5 +1,7 @@
+from sqlalchemy import func, select
+
 from sitio_de_preguntas.extensions import db
-from sitio_de_preguntas.models import Categoria, Etiqueta, Pregunta
+from sitio_de_preguntas.models import Categoria, Etiqueta, Pregunta, Respuesta
 from sitio_de_preguntas.services.autor_services import get_autor
 from sitio_de_preguntas.services.etiqueta_services import obtener_etiquetas
 from sitio_de_preguntas.services.validaciones import validate_id
@@ -30,9 +32,9 @@ def _validar(titulo, contenido, categoria_id):
 def crear_pregunta(usuario_id, titulo, contenido, categoria_id, etiquetas_ids=None):
     titulo, contenido, categoria_id = _validar(titulo, contenido, categoria_id)
     validate_id(usuario_id)
-    auth = get_autor(usuario_id)
-    if not auth.can_ask():
-        raise AutorNoPuedePreguntar("pregunta de agente")
+    autor = get_autor(usuario_id)
+    if not autor.can_ask():
+        raise AutorNoPuedePreguntar("Los autores IA no pueden crear preguntas")
     
     categoria = db.session.get(Categoria, categoria_id)
     if categoria is None:
@@ -42,7 +44,7 @@ def crear_pregunta(usuario_id, titulo, contenido, categoria_id, etiquetas_ids=No
         pregunta = Pregunta(
             titulo=titulo,
             contenido=contenido,
-            autor=auth,
+            autor=autor,
             categoria=categoria,
             etiquetas=et,
             )
@@ -59,8 +61,10 @@ def modificar_pregunta(pregunta_id,usuario_id, titulo, contenido, categoria_id, 
     validate_id(pregunta_id)
     pregunta = db.get_or_404(Pregunta, pregunta_id)
     
-    auth=get_autor(usuario_id)
-    if auth.id != pregunta.autor_id:
+    autor = get_autor(usuario_id)
+    if not autor.can_ask():
+        raise AutorNoPuedePreguntar("Los autores IA no pueden modificar preguntas")
+    if autor.id != pregunta.autor_id:
         raise NoEsAutorDeLaPregunta("Id registrado en pregunta no equivale al del usuario")
 
     titulo, contenido, categoria_id = _validar(titulo, contenido, categoria_id)
@@ -87,14 +91,30 @@ def modificar_pregunta(pregunta_id,usuario_id, titulo, contenido, categoria_id, 
 
 
 def listar_preguntas(categoria_id=None, etiqueta_id=None):
-    consulta = Pregunta.query
+    # Subconsulta correlacionada: una sola consulta para el listado, sin un
+    # COUNT por pregunta. El atributo es transitorio (no toca el modelo).
+    cantidad_respuestas = (
+        select(func.count(Respuesta.id))
+        .where(Respuesta.pregunta_id == Pregunta.id)
+        .correlate_except(Respuesta)
+        .scalar_subquery()
+        .label("cantidad_respuestas")
+    )
+    consulta = db.session.query(Pregunta, cantidad_respuestas)
     if categoria_id:
         consulta = consulta.filter(Pregunta.categoria_id == int(categoria_id))
     if etiqueta_id:
         consulta = consulta.join(Pregunta.etiquetas).filter(
             Etiqueta.id == int(etiqueta_id)
         )
-    return consulta.order_by(Pregunta.fecha_publicacion.desc()).all()
+
+    preguntas = []
+    for pregunta, cantidad in consulta.order_by(
+        Pregunta.fecha_publicacion.desc()
+    ).all():
+        pregunta.cantidad_respuestas = cantidad
+        preguntas.append(pregunta)
+    return preguntas
 
 
 def obtener_pregunta(id: int) -> Pregunta:

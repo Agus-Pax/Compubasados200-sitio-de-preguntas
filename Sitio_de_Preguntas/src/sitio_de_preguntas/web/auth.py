@@ -25,13 +25,13 @@ def _usuario_actual() -> User | None:
 def inicio():
     if _usuario_actual() is None:
         return redirect(url_for("web.login"))
-    return redirect(url_for("web.perfil"))
+    return redirect(url_for("home.inicio"))
 
 
 @web_bp.route("/login", methods=["GET", "POST"])
 def login():
     if _usuario_actual() is not None:
-        return redirect(url_for("web.perfil"))
+        return redirect(url_for("home.inicio"))
 
     errores = {"email": None, "password": None, "general": None}
     email = ""
@@ -61,7 +61,7 @@ def login():
             else:
                 session.clear()
                 session["user_id"] = usuario.id
-                return redirect(url_for("web.perfil"))
+                return redirect(url_for("home.inicio"))
 
     return render_template("auth/login.html", email=email, errores=errores)
 
@@ -69,7 +69,7 @@ def login():
 @web_bp.route("/registro", methods=["GET", "POST"])
 def registro():
     if _usuario_actual() is not None:
-        return redirect(url_for("web.perfil"))
+        return redirect(url_for("home.inicio"))
 
     errores = {
         "nombre": None,

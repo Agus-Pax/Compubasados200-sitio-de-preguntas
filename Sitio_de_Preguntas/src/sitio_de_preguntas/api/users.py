@@ -63,12 +63,6 @@ def listar_usuarios():
 
 #---rutas--------
 
-@users_bp.get("/usuarios")
-def listar_usuarios():
-    usuarios = User.query.order_by(User.id).all()
-    return jsonify([{"id": u.id, "name": u.name, "email": u.email} for u in usuarios])
-
-
 @users_bp.post("/usuarios")
 def crear_usuario():
     datos = _json_objeto()

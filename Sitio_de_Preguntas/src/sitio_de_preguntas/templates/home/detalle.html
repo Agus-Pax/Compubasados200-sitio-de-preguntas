@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% from "home/_votos.html" import votos with context %}
+
+{% block title %}{{ pregunta.titulo }} · Sitio de preguntas{% endblock %}
+
+{% block content %}
+  <main class="home">
+    {% include "home/_header.html" %}
+
+    <article class="detail-card">
+      <p class="eyebrow eyebrow--accent">Pregunta</p>
+      <h2 class="detail-card__title">{{ pregunta.titulo }}</h2>
+      <p class="detail-card__meta">
+        <span>{{ autor }}</span>
+        <span aria-hidden="true">·</span>
+        <time datetime="{{ pregunta.fecha_publicacion.isoformat() if pregunta.fecha_publicacion else '' }}">{{ fecha_pregunta }}</time>
+      </p>
+      <p class="detail-card__content">{{ pregunta.contenido }}</p>
+      {{ votos(
+          url_for('home.votar_pregunta', pregunta_id=pregunta.id),
+          pregunta.votos_positivos,
+          pregunta.votos_negativos,
+          votos_preguntas.get(pregunta.id)
+        ) }}
+    </article>
+
+    <section aria-labelledby="respuestas-title">
+      <h3 class="home__section-title" id="respuestas-title">Respuestas</h3>
+
+      {% if respuestas %}
+        <ul class="answer-list">
+          {% for respuesta in respuestas %}
+            <li class="answer{% if respuesta.id == pregunta.respuesta_aceptada_id %} answer--aceptada{% endif %}">
+              {% if respuesta.id == pregunta.respuesta_aceptada_id %}
+                <p class="answer__badge"><span aria-hidden="true">✓</span> Respuesta aceptada · Solución elegida por el autor</p>
+              {% endif %}
+              <p class="answer__meta">
+                <strong>{{ nombre_autor(respuesta.autor) }}</strong>
+                <span aria-hidden="true">·</span>
+                <time datetime="{{ respuesta.fecha_publicacion.isoformat() if respuesta.fecha_publicacion else '' }}">{{ fecha(respuesta.fecha_publicacion) }}</time>
+              </p>
+              <p class="answer__content">{{ respuesta.contenido }}</p>
+              {{ votos(
+                  url_for('home.votar_respuesta', respuesta_id=respuesta.id),
+                  respuesta.votos_positivos,
+                  respuesta.votos_negativos,
+                  votos_respuestas.get(respuesta.id)
+                ) }}
+
+              {% if es_autor %}
+                <form class="answer__accept" method="post" action="{{ url_for('home.seleccionar_respuesta_aceptada', pregunta_id=pregunta.id) }}">
+                  {% if respuesta.id == pregunta.respuesta_aceptada_id %}
+                    <input type="hidden" name="respuesta_id" value="0">
+                    <button class="button button--secondary" type="submit">Quitar selección</button>
+                  {% else %}
+                    <input type="hidden" name="respuesta_id" value="{{ respuesta.id }}">
+                    <button class="button button--primary" type="submit">Marcar como aceptada</button>
+                  {% endif %}
+                </form>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="empty-state">Todavía no hay respuestas para esta pregunta.</p>
+      {% endif %}
+    </section>
+
+    <section class="form-card" aria-labelledby="respuesta-title">
+      <h3 class="home__section-title" id="respuesta-title">Publicar una respuesta</h3>
+
+      {% if errores.general %}
+        <div class="auth-card__errors" role="alert">{{ errores.general }}</div>
+      {% endif %}
+
+      <form class="question-form" method="post" action="{{ url_for('home.responder', pregunta_id=pregunta.id) }}" novalidate>
+        <div class="field">
+          <label class="field__label" for="contenido">Tu respuesta</label>
+          <textarea
+            class="field__input field__input--textarea"
+            id="contenido"
+            name="contenido"
+            rows="5"
+            placeholder="Contá cómo se resuelve la duda."
+            required
+          >{{ valores.contenido }}</textarea>
+          {% if errores.contenido %}<p class="field__error">{{ errores.contenido }}</p>{% endif %}
+        </div>
+
+        <div class="question-form__actions">
+          <button class="button button--primary" type="submit">Publicar respuesta</button>
+          <a class="button button--secondary" href="{{ url_for('home.inicio') }}">Cancelar</a>
+        </div>
+      </form>
+    </section>
+
+    <p><a class="auth-link" href="{{ url_for('home.inicio') }}">← Volver a las preguntas</a></p>
+  </main>
+{% endblock %}

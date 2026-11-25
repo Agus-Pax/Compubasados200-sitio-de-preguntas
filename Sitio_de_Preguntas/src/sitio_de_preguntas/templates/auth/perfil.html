@@ -35,9 +35,12 @@
           </div>
         </dl>
 
-        <form method="post" action="{{ url_for('web.logout') }}">
-          <button class="button button--secondary" type="submit">Cerrar sesión</button>
-        </form>
+        <div class="profile__actions">
+          <a class="button button--primary button--block" href="{{ url_for('home.inicio') }}">Volver al inicio</a>
+          <form method="post" action="{{ url_for('web.logout') }}">
+            <button class="button button--secondary button--block" type="submit">Cerrar sesión</button>
+          </form>
+        </div>
       </div>
     </section>
   </main>

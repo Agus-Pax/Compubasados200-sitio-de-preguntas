@@ -34,12 +34,14 @@ class Autor(db.Model):
     respuestas = db.relationship(
         "Respuesta", back_populates="autor", cascade="all, delete-orphan"
     )
+    votos = db.relationship("Voto", back_populates="autor", cascade="all, delete-orphan")
 
     @property
     def es_agente(self) -> bool:
-        return self.proveedor is not None
+        return self.tipo_autor == "agente"
 
     def can_ask(self) -> bool:
+        """Sólo los humanos pueden crear preguntas; todos pueden responder."""
         return not self.es_agente
 
     def __repr__(self) -> str:
